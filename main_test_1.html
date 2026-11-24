@@ -5,21 +5,181 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>1v1 卡牌對戰數值測試</title>
   <style>
-    body { font-family: sans-serif; max-width: 640px; margin: 32px auto; padding: 0 16px; line-height: 1.6; }
-    .card { border: 1px solid #ddd; border-radius: 8px; padding: 16px; margin-bottom: 16px; }
-    input { padding: 8px; margin: 4px 0 10px; width: 100%; box-sizing: border-box; }
-    button { padding: 8px 14px; margin-right: 6px; cursor: pointer; }
-    .hidden { display: none; }
-    .row { display: flex; gap: 16px; }
-    .col { flex: 1; background: #f8f9fa; padding: 12px; border-radius: 6px; }
-    #errorMsg { color: #c62828; }
+    * { box-sizing: border-box; }
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      max-width: 900px;
+      margin: 20px auto;
+      padding: 0 16px 40px;
+      background: #f4f6f8;
+      color: #222;
+      line-height: 1.5;
+    }
+    .panel {
+      background: #fff;
+      border: 1px solid #dcdcdc;
+      border-radius: 10px;
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+    .hidden { display: none !important; }
+    .monitor-bar {
+      background: #1e293b;
+      color: #f8fafc;
+      padding: 10px 14px;
+      border-radius: 8px;
+      font-size: 14px;
+      margin-bottom: 16px;
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    input {
+      padding: 8px 10px;
+      margin: 4px 0 12px;
+      width: 100%;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+    }
+    button {
+      padding: 8px 16px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+      background: #2563eb;
+      color: #fff;
+    }
+    button:hover:not(:disabled) { background: #1d4ed8; }
+    button:disabled { background: #cbd5e1; color: #64748b; cursor: not-allowed; }
+    button.secondary { background: #64748b; }
+    button.secondary:hover:not(:disabled) { background: #475569; }
+    button.danger { background: #dc2626; }
+    button.danger:hover:not(:disabled) { background: #b91c1c; }
+
+    .status-row {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+    }
+    .status-box {
+      flex: 1;
+      min-width: 220px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 12px;
+    }
+    .deck-area {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    .deck-btn {
+      width: 120px;
+      height: 150px;
+      border-radius: 10px;
+      background: #334155;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      font-size: 15px;
+      border: 3px solid #94a3b8;
+    }
+    .deck-btn:hover:not(:disabled) { background: #1e293b; }
+
+    /* 五個出牌空槽與開牌兩排 */
+    .slots-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 10px;
+      margin: 12px 0;
+    }
+    .slot {
+      min-height: 115px;
+      border: 2px dashed #94a3b8;
+      border-radius: 8px;
+      padding: 8px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      background: #f8fafc;
+      position: relative;
+    }
+    .slot-label {
+      position: absolute;
+      top: 4px;
+      left: 6px;
+      font-size: 11px;
+      color: #64748b;
+    }
+    .slot.filled {
+      border-style: solid;
+      cursor: pointer;
+    }
+
+    /* 手牌列表 */
+    .hand-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 10px;
+    }
+    .card-item {
+      width: 110px;
+      min-height: 96px;
+      border-radius: 8px;
+      padding: 10px 8px;
+      border: 2px solid #94a3b8;
+      background: #fff;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      transition: transform 0.1s;
+    }
+    .card-item:hover { transform: translateY(-3px); }
+    .card-atk { border-color: #ef4444; background: #fef2f2; }
+    .card-def { border-color: #3b82f6; background: #eff6ff; }
+    .card-name { font-weight: 700; font-size: 15px; }
+    .card-desc { font-size: 12px; color: #555; margin-top: 4px; }
+
+    .reveal-title {
+      font-size: 15px;
+      font-weight: 700;
+      margin: 12px 0 4px;
+    }
+    .waiting-note {
+      color: #b45309;
+      font-weight: 600;
+      margin-top: 8px;
+    }
+    #errorMsg { color: #dc2626; font-weight: 600; }
   </style>
 </head>
 <body>
   <h1>1v1 卡牌對戰數值測試</h1>
 
-  <!-- 登入畫面（僅供固定帳號登入，不開放註冊） -->
-  <div id="loginBox" class="card">
+  <!-- 登入畫面（固定雙人帳號，不開放註冊） -->
+  <div id="loginBox" class="panel" style="max-width: 420px; margin: 40px auto;">
     <h2>測試人員登入</h2>
     <label>帳號 (Email)</label>
     <input id="emailInput" type="email" placeholder="例如：p1@test.com" />
@@ -29,38 +189,88 @@
     <p id="errorMsg"></p>
   </div>
 
-  <!-- 登入後的雙人即時同步測試區 -->
+  <!-- 登入後的遊戲主畫面 -->
   <div id="gameBox" class="hidden">
-    <div class="card">
-      <p>目前登入身分：<strong id="userInfo"></strong></p>
-      <button id="logoutBtn">登出</button>
-      <button id="resetBtn">重置雙方數值</button>
+    <!-- 保留：監測雙方最後動作條目 -->
+    <div class="monitor-bar">
+      <span><strong>最後動作監測：</strong><span id="lastAction">尚無紀錄</span></span>
+      <span><strong>目前回合：</strong>第 <span id="roundNum">1</span> 回合</span>
     </div>
 
-    <div class="card">
-      <h2>雙人即時同步測試（點擊按鈕，對方畫面會立即變動）</h2>
-      <div class="row">
-        <div class="col">
-          <h3>玩家 1 (P1)</h3>
-          <p>HP：<strong id="p1Hp">30</strong></p>
-          <button id="p1Minus">-1 HP</button>
-          <button id="p1Plus">+1 HP</button>
-        </div>
-        <div class="col">
-          <h3>玩家 2 (P2)</h3>
-          <p>HP：<strong id="p2Hp">30</strong></p>
-          <button id="p2Minus">-1 HP</button>
-          <button id="p2Plus">+1 HP</button>
-        </div>
+    <div class="panel top-bar">
+      <div>目前登入身分：<strong id="userInfo"></strong></div>
+      <div>
+        <button id="forceResetBtn" class="secondary">開發用：強制重置對局</button>
+        <button id="logoutBtn" class="danger">登出</button>
       </div>
-      <p>最後操作紀錄：<span id="lastAction">尚無紀錄</span></p>
+    </div>
+
+    <!-- 雙方資訊（不透漏對手手牌與選擇） -->
+    <div class="status-row">
+      <div class="status-box">
+        <strong>對手狀態（<span id="oppRoleName">對手</span>）</strong>
+        <div>牌庫剩餘：<span id="oppDeckCount">60</span> 張 ｜ 棄牌堆：<span id="oppDiscardCount">0</span> 張</div>
+        <div>目前進度：<strong id="oppStatusText">等待中</strong></div>
+      </div>
+      <div class="status-box">
+        <strong>我方狀態（<span id="myRoleName">我方</span>）</strong>
+        <div>牌庫剩餘：<span id="myDeckCount">60</span> 張 ｜ 棄牌堆：<span id="myDiscardCount">0</span> 張</div>
+        <div>目前進度：<strong id="myStatusText">請點擊牌庫抽牌</strong></div>
+      </div>
+    </div>
+
+    <!-- 階段 A：動作一～動作四（抽牌、放五張到空槽、確認） -->
+    <div id="playPhasePanel" class="panel">
+      <h3>動作一：點擊牌庫抽 10 張牌</h3>
+      <div class="deck-area">
+        <button id="drawDeckBtn" class="deck-btn">
+          <span>牌庫</span>
+          <span id="deckBtnCount">剩 60 張</span>
+          <span style="font-size:12px;">點擊抽 10 張</span>
+        </button>
+        <div id="drawHint">尚未抽牌，請點擊左側牌庫抽出本回合的 10 張手牌。</div>
+      </div>
+
+      <h3 style="margin-top:20px;">動作二：依序放入五個空槽（由左至右，點擊槽內卡牌可退回手牌）</h3>
+      <div id="mySlotsGrid" class="slots-grid"></div>
+
+      <div style="margin-top: 12px;">
+        <button id="confirmPlayBtn" disabled>動作三：確認出牌（剩餘手牌自動棄牌）</button>
+        <div id="playWaitMsg" class="waiting-note hidden">已確認出牌並將剩餘手牌放入棄牌堆，等待對手確認中...</div>
+      </div>
+
+      <h3 style="margin-top:20px;">我的手牌（點擊卡牌依序放入空槽）</h3>
+      <div id="myHandGrid" class="hand-grid"></div>
+    </div>
+
+    <!-- 階段 B：動作五～動作六（公布雙方卡牌，上下兩排由左至右） -->
+    <div id="revealPhasePanel" class="panel hidden">
+      <h2>開牌公布（第 <span id="revealRoundNum">1</span> 回合）</h2>
+      <div class="reveal-title">上排：對手放置的卡牌（由左至右）</div>
+      <div id="oppRevealGrid" class="slots-grid"></div>
+
+      <div class="reveal-title">下排：我方放置的卡牌（由左至右）</div>
+      <div id="myRevealGrid" class="slots-grid"></div>
+
+      <div style="margin-top: 16px;">
+        <button id="confirmNextBtn">確認（進入下一回合）</button>
+        <div id="nextWaitMsg" class="waiting-note hidden">你已確認，等待對手按下確認...</div>
+      </div>
+    </div>
+
+    <!-- 階段 C：動作七（牌庫沒牌，遊戲結束與雙方重來） -->
+    <div id="endPhasePanel" class="panel hidden" style="text-align: center;">
+      <h2>遊戲結束</h2>
+      <p>雙方牌庫皆已抽完！總共進行了 <strong id="totalRoundsEnd">6</strong> 回合。</p>
+      <button id="restartBtn">重來一局</button>
+      <div id="restartWaitMsg" class="waiting-note hidden">你已按下重來，等待對手也按下重來...</div>
     </div>
   </div>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-app.js";
     import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-auth.js";
-    import { getDatabase, ref, onValue, update, set } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-database.js";
+    import { getDatabase, ref, onValue, set, update, runTransaction } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-database.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyC181fUSY9S7iRJxcoYfe37FBk5zT0_z6M",
@@ -73,31 +283,145 @@
       measurementId: "G-67RC3QVKGK"
     };
 
-    // 請改成你在 Firebase Authentication 建立的兩組固定測試帳號
+    // =========================================================
+    // TODO 1：改成你在 Firebase Authentication 建立的兩組 Email
+    // =========================================================
     const PLAYER_ROLES = {
-      "joanne@test.com": "玩家 1 (P1)",
-      "howard@test.com": "玩家 2 (P2)"
+      "joanne@test.com": { key: "p1", name: "玩家 1 (P1)" },
+      "howard@test.com": { key: "p2", name: "玩家 2 (P2)" }
     };
+
+    // =========================================================
+    // TODO 2：在這裡自訂 60 張牌的名稱、類型、內容與張數
+    // =========================================================
+    const CARD_TEMPLATES = [
+      { name: "攻擊", type: "atk", desc: "攻擊牌內容待填", count: 30 },
+      { name: "防禦", type: "def", desc: "防禦牌內容待填", count: 30 }
+    ];
+
+    // 產生並洗亂 60 張牌庫
+    function createShuffledDeck() {
+      const deck = [];
+      let uid = 1;
+      for (const tpl of CARD_TEMPLATES) {
+        for (let i = 0; i < tpl.count; i++) {
+          deck.push({
+            id: `c_${uid++}_${Math.random().toString(36).slice(2, 6)}`,
+            name: tpl.name,
+            type: tpl.type,
+            desc: tpl.desc
+          });
+        }
+      }
+      // Fisher-Yates 洗牌演算法
+      for (let i = deck.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [deck[i], deck[j]] = [deck[j], deck[i]];
+      }
+      return deck;
+    }
+
+    function createInitialMatch(actionText = "已建立新對局並洗好雙方 60 張牌庫") {
+      return {
+        matchId: Date.now(),
+        round: 1,
+        phase: "playing", // playing | ended
+        lastAction: actionText,
+        p1: {
+          deck: createShuffledDeck(),
+          hand: [],
+          slots: [false, false, false, false, false],
+          discard: [],
+          drawn: false,
+          confirmed: false,
+          nextReady: false,
+          restartReady: false
+        },
+        p2: {
+          deck: createShuffledDeck(),
+          hand: [],
+          slots: [false, false, false, false, false],
+          discard: [],
+          drawn: false,
+          confirmed: false,
+          nextReady: false,
+          restartReady: false
+        }
+      };
+    }
+
+    // Firebase 陣列安全轉換工具
+    function toArr(val) {
+      if (!val) return [];
+      return Array.isArray(val) ? val : Object.values(val);
+    }
+
+    function toSlots(val) {
+      const result = [null, null, null, null, null];
+      if (!val) return result;
+      for (let i = 0; i < 5; i++) {
+        result[i] = val[i] && val[i] !== false ? val[i] : null;
+      }
+      return result;
+    }
 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getDatabase(app);
-    const matchRef = ref(db, "test_match");
+    const matchRef = ref(db, "cardgame_match");
 
+    // DOM 元素
     const loginBox = document.getElementById("loginBox");
     const gameBox = document.getElementById("gameBox");
     const errorMsg = document.getElementById("errorMsg");
     const userInfo = document.getElementById("userInfo");
-    const p1HpEl = document.getElementById("p1Hp");
-    const p2HpEl = document.getElementById("p2Hp");
     const lastActionEl = document.getElementById("lastAction");
+    const roundNumEl = document.getElementById("roundNum");
 
-    let currentState = { p1Hp: 30, p2Hp: 30, lastAction: "尚未開始" };
+    const oppRoleNameEl = document.getElementById("oppRoleName");
+    const oppDeckCountEl = document.getElementById("oppDeckCount");
+    const oppDiscardCountEl = document.getElementById("oppDiscardCount");
+    const oppStatusTextEl = document.getElementById("oppStatusText");
+
+    const myRoleNameEl = document.getElementById("myRoleName");
+    const myDeckCountEl = document.getElementById("myDeckCount");
+    const myDiscardCountEl = document.getElementById("myDiscardCount");
+    const myStatusTextEl = document.getElementById("myStatusText");
+
+    const playPhasePanel = document.getElementById("playPhasePanel");
+    const drawDeckBtn = document.getElementById("drawDeckBtn");
+    const deckBtnCount = document.getElementById("deckBtnCount");
+    const drawHint = document.getElementById("drawHint");
+    const mySlotsGrid = document.getElementById("mySlotsGrid");
+    const myHandGrid = document.getElementById("myHandGrid");
+    const confirmPlayBtn = document.getElementById("confirmPlayBtn");
+    const playWaitMsg = document.getElementById("playWaitMsg");
+
+    const revealPhasePanel = document.getElementById("revealPhasePanel");
+    const revealRoundNum = document.getElementById("revealRoundNum");
+    const oppRevealGrid = document.getElementById("oppRevealGrid");
+    const myRevealGrid = document.getElementById("myRevealGrid");
+    const confirmNextBtn = document.getElementById("confirmNextBtn");
+    const nextWaitMsg = document.getElementById("nextWaitMsg");
+
+    const endPhasePanel = document.getElementById("endPhasePanel");
+    const totalRoundsEnd = document.getElementById("totalRoundsEnd");
+    const restartBtn = document.getElementById("restartBtn");
+    const restartWaitMsg = document.getElementById("restartWaitMsg");
+
+    let myRole = null;       // { key: "p1"|"p2", name: "..." }
+    let oppKey = null;       // "p2"|"p1"
+    let matchData = null;
     let unsubscribeMatch = null;
 
+    // 本地暫存：尚未按確認前，玩家挑選放入 5 個空槽的卡牌（不提前送出給對手）
+    let localSlots = [null, null, null, null, null];
+    let lastRoundToken = "";
+
+    // 登入與登出
     document.getElementById("loginBtn").addEventListener("click", async () => {
       errorMsg.textContent = "";
-      const email = document.getElementById("emailInput").value.trim();
+      const email = document.getElementById("emailInput").value.trim().toLowerCase();
       const password = document.getElementById("passwordInput").value;
       try {
         await signInWithEmailAndPassword(auth, email, password);
@@ -108,48 +432,309 @@
 
     document.getElementById("logoutBtn").addEventListener("click", () => signOut(auth));
 
+    document.getElementById("forceResetBtn").addEventListener("click", () => {
+      if (!myRole) return;
+      if (confirm("確定要強制重置整局並重新洗牌嗎？")) {
+        set(matchRef, createInitialMatch(`${myRole.name} 強制重置了對局並重新洗牌`));
+      }
+    });
+
     onAuthStateChanged(auth, (user) => {
       if (user) {
-        const role = PLAYER_ROLES[user.email] || user.email;
-        userInfo.textContent = `${role} (${user.email})`;
+        const emailLower = (user.email || "").toLowerCase();
+        myRole = PLAYER_ROLES[emailLower];
+        if (!myRole) {
+          errorMsg.textContent = `帳號 ${user.email} 不在 PLAYER_ROLES 名單中，請檢查程式碼設定。`;
+          signOut(auth);
+          return;
+        }
+        oppKey = myRole.key === "p1" ? "p2" : "p1";
+        userInfo.textContent = `${myRole.name} (${user.email})`;
+        myRoleNameEl.textContent = myRole.name;
+        oppRoleNameEl.textContent = oppKey === "p1" ? "玩家 1 (P1)" : "玩家 2 (P2)";
+
         loginBox.classList.add("hidden");
         gameBox.classList.remove("hidden");
 
         unsubscribeMatch = onValue(matchRef, (snapshot) => {
           const data = snapshot.val();
-          if (data) {
-            currentState = data;
-            p1HpEl.textContent = data.p1Hp ?? 30;
-            p2HpEl.textContent = data.p2Hp ?? 30;
-            lastActionEl.textContent = data.lastAction ?? "尚無紀錄";
+          if (!data || !data.p1 || !data.p2) {
+            // 若資料庫尚無對局資料，自動建立第一局
+            set(matchRef, createInitialMatch("系統自動建立新對局並洗好雙方 60 張牌庫"));
+            return;
           }
+          matchData = data;
+          const token = `${data.matchId}_${data.round}`;
+          if (token !== lastRoundToken) {
+            localSlots = [null, null, null, null, null];
+            lastRoundToken = token;
+          }
+          renderGame();
         });
       } else {
         if (unsubscribeMatch) unsubscribeMatch();
+        matchData = null;
+        myRole = null;
+        loginBox.classList.add("hidden") ? loginBox.classList.remove("hidden") : null;
         loginBox.classList.remove("hidden");
         gameBox.classList.add("hidden");
       }
     });
 
-    function changeHp(target, delta) {
-      const user = auth.currentUser;
-      if (!user) return;
-      const role = PLAYER_ROLES[user.email] || user.email;
-      const nextValue = (currentState[target] ?? 30) + delta;
+    // 動作一：點擊牌庫抽出最上方 10 張牌至手牌
+    drawDeckBtn.addEventListener("click", () => {
+      if (!matchData || !myRole) return;
+      const myState = matchData[myRole.key];
+      const deck = toArr(myState.deck);
+      if (myState.drawn || deck.length === 0) return;
+
+      const drawCount = Math.min(10, deck.length);
+      const drawnCards = deck.slice(0, drawCount);
+      const remainDeck = deck.slice(drawCount);
+
+      localSlots = [null, null, null, null, null];
       update(matchRef, {
-        [target]: nextValue,
-        lastAction: `${role} 將 ${target === "p1Hp" ? "P1" : "P2"} HP 調整為 ${nextValue}`
+        [`${myRole.key}/deck`]: remainDeck,
+        [`${myRole.key}/hand`]: drawnCards,
+        [`${myRole.key}/drawn`]: true,
+        lastAction: `${myRole.name} 從牌庫抽出了 ${drawCount} 張牌`
+      });
+    });
+
+    // 動作三 + 動作四：放滿 5 張後按確認，剩餘手牌自動放入棄牌堆
+    confirmPlayBtn.addEventListener("click", () => {
+      if (!matchData || !myRole) return;
+      const myState = matchData[myRole.key];
+      if (myState.confirmed) return;
+      if (localSlots.some((c) => !c)) return;
+
+      const selectedIds = new Set(localSlots.map((c) => c.id));
+      const fullHand = toArr(myState.hand);
+      const leftoverCards = fullHand.filter((c) => !selectedIds.has(c.id));
+      const newDiscard = [...toArr(myState.discard), ...leftoverCards];
+
+      update(matchRef, {
+        [`${myRole.key}/slots`]: localSlots,
+        [`${myRole.key}/hand`]: [],
+        [`${myRole.key}/discard`]: newDiscard,
+        [`${myRole.key}/confirmed`]: true,
+        lastAction: `${myRole.name} 已確認 5 張出牌並將剩餘 ${leftoverCards.length} 張手牌放入棄牌堆`
+      });
+    });
+
+    // 動作六：開牌後按確認，雙方皆確認後回到動作一（若牌庫空則進入結束）
+    confirmNextBtn.addEventListener("click", () => {
+      if (!myRole) return;
+      runTransaction(matchRef, (data) => {
+        if (!data || !data.p1 || !data.p2) return data;
+        data[myRole.key].nextReady = true;
+        data.lastAction = `${myRole.name} 已確認開牌結果`;
+
+        if (data.p1.nextReady && data.p2.nextReady) {
+          // 將本回合雙方打出的 5 張牌移入各自棄牌堆
+          const p1Played = toSlots(data.p1.slots).filter(Boolean);
+          const p2Played = toSlots(data.p2.slots).filter(Boolean);
+          data.p1.discard = [...toArr(data.p1.discard), ...p1Played];
+          data.p2.discard = [...toArr(data.p2.discard), ...p2Played];
+
+          data.p1.slots = [false, false, false, false, false];
+          data.p2.slots = [false, false, false, false, false];
+          data.p1.drawn = false;
+          data.p2.drawn = false;
+          data.p1.confirmed = false;
+          data.p2.confirmed = false;
+          data.p1.nextReady = false;
+          data.p2.nextReady = false;
+
+          const p1Left = toArr(data.p1.deck).length;
+          const p2Left = toArr(data.p2.deck).length;
+
+          if (p1Left === 0 && p2Left === 0) {
+            data.phase = "ended";
+            data.lastAction = "雙方牌庫已抽完，遊戲結束！";
+          } else {
+            data.round = (data.round || 1) + 1;
+            data.lastAction = `雙方已確認，進入第 ${data.round} 回合`;
+          }
+        }
+        return data;
+      });
+    });
+
+    // 動作七：遊戲結束後按重來，雙方皆按下則重洗牌庫開始新局
+    restartBtn.addEventListener("click", () => {
+      if (!myRole) return;
+      runTransaction(matchRef, (data) => {
+        if (!data || !data.p1 || !data.p2) return data;
+        data[myRole.key].restartReady = true;
+        data.lastAction = `${myRole.name} 已按下重來一局`;
+
+        if (data.p1.restartReady && data.p2.restartReady) {
+          return createInitialMatch("雙方皆已按下重來，重新洗牌開始新對局！");
+        }
+        return data;
+      });
+    });
+
+    // 繪製單張卡牌 HTML
+    function createCardContent(card) {
+      const typeClass = card.type === "atk" ? "card-atk" : "card-def";
+      return {
+        typeClass,
+        html: `<div class="card-name">${card.name}</div><div class="card-desc">${card.desc || ""}</div>`
+      };
+    }
+
+    // 主畫面渲染
+    function renderGame() {
+      if (!matchData || !myRole) return;
+      const myState = matchData[myRole.key];
+      const oppState = matchData[oppKey];
+
+      const myDeck = toArr(myState.deck);
+      const myDiscard = toArr(myState.discard);
+      const oppDeck = toArr(oppState.deck);
+      const oppDiscard = toArr(oppState.discard);
+
+      lastActionEl.textContent = matchData.lastAction || "尚無紀錄";
+      roundNumEl.textContent = matchData.round || 1;
+
+      myDeckCountEl.textContent = myDeck.length;
+      myDiscardCountEl.textContent = myDiscard.length;
+      oppDeckCountEl.textContent = oppDeck.length;
+      oppDiscardCountEl.textContent = oppDiscard.length;
+
+      // 對手進度文字（絕不透漏牌庫/手牌/選擇內容）
+      if (matchData.phase === "ended") {
+        oppStatusTextEl.textContent = oppState.restartReady ? "已按下重來" : "等待按下重來";
+        myStatusTextEl.textContent = myState.restartReady ? "已按下重來" : "請決定是否重來";
+      } else if (myState.confirmed && oppState.confirmed) {
+        oppStatusTextEl.textContent = oppState.nextReady ? "已確認開牌" : "檢視開牌結果中";
+        myStatusTextEl.textContent = myState.nextReady ? "已確認開牌" : "請檢視開牌並按確認";
+      } else {
+        oppStatusTextEl.textContent = oppState.confirmed
+          ? "已放完 5 張牌並鎖定確認"
+          : (oppState.drawn ? "已抽牌，選擇出牌中..." : "尚未抽牌");
+        myStatusTextEl.textContent = myState.confirmed
+          ? "已確認出牌，等待對手"
+          : (myState.drawn ? "請挑選 5 張牌放入空槽" : "請點擊牌庫抽 10 張牌");
+      }
+
+      // 切換三個畫面狀態：結束 / 開牌公布 / 抽牌與選牌
+      if (matchData.phase === "ended") {
+        playPhasePanel.classList.add("hidden");
+        revealPhasePanel.classList.add("hidden");
+        endPhasePanel.classList.remove("hidden");
+
+        totalRoundsEnd.textContent = matchData.round || 1;
+        restartBtn.disabled = !!myState.restartReady;
+        restartWaitMsg.classList.toggle("hidden", !myState.restartReady);
+        return;
+      }
+
+      const bothConfirmed = !!myState.confirmed && !!oppState.confirmed;
+      if (bothConfirmed) {
+        playPhasePanel.classList.add("hidden");
+        endPhasePanel.classList.add("hidden");
+        revealPhasePanel.classList.remove("hidden");
+
+        revealRoundNum.textContent = matchData.round || 1;
+        renderRevealRow(oppRevealGrid, toSlots(oppState.slots));
+        renderRevealRow(myRevealGrid, toSlots(myState.slots));
+
+        confirmNextBtn.disabled = !!myState.nextReady;
+        nextWaitMsg.classList.toggle("hidden", !myState.nextReady);
+        return;
+      }
+
+      // 動作一～動作四畫面
+      revealPhasePanel.classList.add("hidden");
+      endPhasePanel.classList.add("hidden");
+      playPhasePanel.classList.remove("hidden");
+
+      deckBtnCount.textContent = `剩 ${myDeck.length} 張`;
+      drawDeckBtn.disabled = !!myState.drawn || myDeck.length === 0;
+      drawHint.textContent = myState.drawn
+        ? "本回合已抽牌，請從下方手牌依序選出 5 張放入空槽。"
+        : "尚未抽牌，請點擊左側牌庫抽出本回合的 10 張手牌。";
+
+      const displaySlots = myState.confirmed ? toSlots(myState.slots) : localSlots;
+      renderMySlots(displaySlots, !!myState.confirmed);
+      renderMyHand(toArr(myState.hand), !!myState.confirmed);
+
+      const allFiveFilled = displaySlots.every((c) => !!c);
+      confirmPlayBtn.disabled = !!myState.confirmed || !allFiveFilled;
+      playWaitMsg.classList.toggle("hidden", !myState.confirmed);
+    }
+
+    function renderMySlots(slots, locked) {
+      mySlotsGrid.innerHTML = "";
+      slots.forEach((card, idx) => {
+        const div = document.createElement("div");
+        div.className = "slot";
+        const label = `<span class="slot-label">位置 ${idx + 1}</span>`;
+        if (card) {
+          const info = createCardContent(card);
+          div.classList.add("filled", info.typeClass);
+          div.innerHTML = label + info.html;
+          if (!locked) {
+            div.title = "點擊退回手牌";
+            div.addEventListener("click", () => {
+              localSlots[idx] = null;
+              renderGame();
+            });
+          }
+        } else {
+          div.innerHTML = `${label}<span style="color:#94a3b8;font-size:13px;">空槽</span>`;
+        }
+        mySlotsGrid.appendChild(div);
       });
     }
 
-    document.getElementById("p1Minus").addEventListener("click", () => changeHp("p1Hp", -1));
-    document.getElementById("p1Plus").addEventListener("click", () => changeHp("p1Hp", 1));
-    document.getElementById("p2Minus").addEventListener("click", () => changeHp("p2Hp", -1));
-    document.getElementById("p2Plus").addEventListener("click", () => changeHp("p2Hp", 1));
+    function renderMyHand(hand, locked) {
+      myHandGrid.innerHTML = "";
+      if (locked) {
+        myHandGrid.innerHTML = `<span style="color:#64748b;">剩餘手牌已自動移至棄牌堆。</span>`;
+        return;
+      }
+      if (hand.length === 0) {
+        myHandGrid.innerHTML = `<span style="color:#64748b;">目前沒有手牌，請先點擊上方牌庫抽牌。</span>`;
+        return;
+      }
+      const placedIds = new Set(localSlots.filter(Boolean).map((c) => c.id));
+      const availableHand = hand.filter((c) => !placedIds.has(c.id));
 
-    document.getElementById("resetBtn").addEventListener("click", () => {
-      set(matchRef, { p1Hp: 30, p2Hp: 30, lastAction: "雙方數值已重置為 30" });
-    });
+      availableHand.forEach((card) => {
+        const info = createCardContent(card);
+        const btn = document.createElement("div");
+        btn.className = `card-item ${info.typeClass}`;
+        btn.innerHTML = info.html;
+        btn.addEventListener("click", () => {
+          const emptyIndex = localSlots.findIndex((s) => !s);
+          if (emptyIndex === -1) return;
+          localSlots[emptyIndex] = card;
+          renderGame();
+        });
+        myHandGrid.appendChild(btn);
+      });
+    }
+
+    function renderRevealRow(container, slots) {
+      container.innerHTML = "";
+      slots.forEach((card, idx) => {
+        const div = document.createElement("div");
+        div.className = "slot filled";
+        const label = `<span class="slot-label">位置 ${idx + 1}</span>`;
+        if (card) {
+          const info = createCardContent(card);
+          div.classList.add(info.typeClass);
+          div.innerHTML = label + info.html;
+        } else {
+          div.innerHTML = `${label}<span>無</span>`;
+        }
+        container.appendChild(div);
+      });
+    }
   </script>
 </body>
 </html>
