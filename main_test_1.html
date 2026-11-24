@@ -65,6 +65,8 @@
     button.secondary:hover:not(:disabled) { background: #475569; }
     button.danger { background: #dc2626; }
     button.danger:hover:not(:disabled) { background: #b91c1c; }
+    button.success { background: #16a34a; }
+    button.success:hover:not(:disabled) { background: #15803d; }
 
     .status-row {
       display: flex;
@@ -74,7 +76,7 @@
     }
     .status-box {
       flex: 1;
-      min-width: 240px;
+      min-width: 260px;
       background: #f8fafc;
       border: 1px solid #e2e8f0;
       border-radius: 8px;
@@ -90,6 +92,26 @@
       font-weight: 700;
       font-size: 14px;
     }
+    .buff-row {
+      margin-top: 8px;
+      padding-top: 8px;
+      border-top: 1px dashed #cbd5e1;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      font-size: 12px;
+    }
+    .tag {
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-weight: 600;
+      background: #e2e8f0;
+      color: #334155;
+    }
+    .tag-enchant { background: #fef3c7; color: #b45309; }
+    .tag-buff { background: #dcfce7; color: #15803d; }
+    .tag-debuff { background: #fee2e2; color: #b91c1c; }
+
     .deck-area {
       display: flex;
       align-items: center;
@@ -120,7 +142,7 @@
       margin: 12px 0;
     }
     .slot {
-      min-height: 132px;
+      min-height: 140px;
       border: 2px dashed #94a3b8;
       border-radius: 8px;
       padding: 22px 8px 8px;
@@ -142,6 +164,32 @@
     .slot.filled {
       border-style: solid;
       cursor: pointer;
+    }
+    .slot.active-unit {
+      box-shadow: 0 0 0 3px #f59e0b;
+    }
+    .slot.done-unit {
+      opacity: 0.65;
+    }
+
+    /* 屬性盾選擇按鈕 */
+    .shield-picker {
+      display: flex;
+      gap: 4px;
+      margin-top: 6px;
+    }
+    .shield-btn {
+      padding: 2px 7px;
+      font-size: 11px;
+      border-radius: 4px;
+      background: #e2e8f0;
+      color: #334155;
+      font-weight: 700;
+    }
+    .shield-btn:hover { background: #cbd5e1; }
+    .shield-btn.selected {
+      background: #2563eb;
+      color: #fff;
     }
 
     /* 手牌列表 */
@@ -180,6 +228,35 @@
       font-weight: 700;
       margin: 12px 0 4px;
     }
+    .combat-log {
+      margin-top: 16px;
+      background: #0f172a;
+      color: #e2e8f0;
+      border-radius: 8px;
+      padding: 14px;
+      max-height: 320px;
+      overflow-y: auto;
+      font-size: 13px;
+      line-height: 1.7;
+    }
+    .combat-log h4 {
+      margin: 0 0 8px;
+      color: #38bdf8;
+      font-size: 14px;
+    }
+    .log-unit-header {
+      color: #fbbf24;
+      font-weight: 700;
+      margin-top: 8px;
+      border-top: 1px solid #334155;
+      padding-top: 6px;
+    }
+    .log-unit-header:first-of-type {
+      margin-top: 0;
+      border-top: none;
+      padding-top: 0;
+    }
+    .log-hp { color: #4ade80; font-weight: 600; }
     .waiting-note {
       color: #b45309;
       font-weight: 600;
@@ -195,7 +272,7 @@
   <div id="loginBox" class="panel" style="max-width: 420px; margin: 40px auto;">
     <h2>測試人員登入</h2>
     <label>帳號 (Email)</label>
-    <input id="emailInput" type="email" placeholder="例如：p1@test.com" />
+    <input id="emailInput" type="email" placeholder="例如：joanne@test.com" />
     <label>密碼</label>
     <input id="passwordInput" type="password" placeholder="輸入密碼" />
     <button id="loginBtn">登入</button>
@@ -218,23 +295,25 @@
       </div>
     </div>
 
-    <!-- 雙方資訊（含血量 10，不透漏對手手牌與選擇） -->
+    <!-- 雙方資訊（含血量、附魔、增傷、負面效果） -->
     <div class="status-row">
       <div class="status-box">
         <div>
           <strong>對手狀態（<span id="oppRoleName">對手</span>）</strong>
-          <span class="hp-badge">HP：<span id="oppHp">10</span></span>
+          <span class="hp-badge">HP：<span id="oppHp">10</span> / 10</span>
         </div>
         <div>牌庫剩餘：<span id="oppDeckCount">60</span> 張 ｜ 棄牌堆：<span id="oppDiscardCount">0</span> 張</div>
         <div>目前進度：<strong id="oppStatusText">等待中</strong></div>
+        <div id="oppBuffRow" class="buff-row"></div>
       </div>
       <div class="status-box">
         <div>
           <strong>我方狀態（<span id="myRoleName">我方</span>）</strong>
-          <span class="hp-badge">HP：<span id="myHp">10</span></span>
+          <span class="hp-badge">HP：<span id="myHp">10</span> / 10</span>
         </div>
         <div>牌庫剩餘：<span id="myDeckCount">60</span> 張 ｜ 棄牌堆：<span id="myDiscardCount">0</span> 張</div>
         <div>目前進度：<strong id="myStatusText">請點擊牌庫抽牌</strong></div>
+        <div id="myBuffRow" class="buff-row"></div>
       </div>
     </div>
 
@@ -250,7 +329,7 @@
         <div id="drawHint">尚未抽牌，請點擊左側牌庫抽出本回合的 10 張手牌。</div>
       </div>
 
-      <h3 style="margin-top:20px;">動作二：依序放入五個空槽（由左至右，點擊槽內卡牌可退回手牌）</h3>
+      <h3 style="margin-top:20px;">動作二：依序放入五個空槽（由左至右，點擊槽內卡牌可退回手牌；屬性盾可直接在槽內選屬性）</h3>
       <div id="mySlotsGrid" class="slots-grid"></div>
 
       <div style="margin-top: 12px;">
@@ -262,9 +341,9 @@
       <div id="myHandGrid" class="hand-grid"></div>
     </div>
 
-    <!-- 階段 B：動作五～動作六（公布雙方卡牌，上下兩排由左至右） -->
+    <!-- 階段 B：動作五～動作六（開牌與逐單位結算） -->
     <div id="revealPhasePanel" class="panel hidden">
-      <h2>開牌公布（第 <span id="revealRoundNum">1</span> 回合）</h2>
+      <h2>開牌與逐單位結算（第 <span id="revealRoundNum">1</span> 回合｜進度：<span id="resolveProgressText">0 / 5</span>）</h2>
       <div class="reveal-title">上排：對手放置的卡牌（由左至右）</div>
       <div id="oppRevealGrid" class="slots-grid"></div>
 
@@ -272,17 +351,29 @@
       <div id="myRevealGrid" class="slots-grid"></div>
 
       <div style="margin-top: 16px;">
-        <button id="confirmNextBtn">確認（進入下一回合）</button>
+        <button id="resolveUnitBtn" class="success">結算單位 1</button>
+        <button id="confirmNextBtn" class="hidden">雙方確認進入下一回合</button>
         <div id="nextWaitMsg" class="waiting-note hidden">你已確認，等待對手按下確認...</div>
+      </div>
+
+      <div class="combat-log">
+        <h4>結算過程與判定紀錄</h4>
+        <div id="combatLogContent">等待開始結算單位 1...</div>
       </div>
     </div>
 
-    <!-- 階段 C：動作七（牌庫沒牌，遊戲結束與雙方重來） -->
+    <!-- 階段 C：動作七（血量歸零或牌庫沒牌，遊戲結束與雙方重來） -->
     <div id="endPhasePanel" class="panel hidden" style="text-align: center;">
       <h2>遊戲結束</h2>
-      <p>雙方牌庫皆已抽完！總共進行了 <strong id="totalRoundsEnd">6</strong> 回合。</p>
+      <p id="endReasonText" style="font-size: 17px; font-weight: 700; color: #b91c1c;"></p>
+      <p>總共進行了 <strong id="totalRoundsEnd">1</strong> 回合。</p>
       <button id="restartBtn">重來一局</button>
       <div id="restartWaitMsg" class="waiting-note hidden">你已按下重來，等待對手也按下重來...</div>
+
+      <div class="combat-log" style="text-align: left;">
+        <h4>最終結算過程與判定紀錄</h4>
+        <div id="endCombatLogContent"></div>
+      </div>
     </div>
   </div>
 
@@ -302,39 +393,33 @@
       measurementId: "G-67RC3QVKGK"
     };
 
-    // =========================================================
-    // TODO 1：改成你在 Firebase Authentication 建立的兩組 Email
-    // =========================================================
     const PLAYER_ROLES = {
       "joanne@test.com": { key: "p1", name: "玩家 1 (P1)" },
       "howard@test.com": { key: "p2", name: "玩家 2 (P2)" }
     };
 
-    // =========================================================
-    // 玩家初始血量
-    // =========================================================
     const INITIAL_HP = 10;
 
-    // =========================================================
-    // 依表格設定的 60 張牌組（含完整數值與觸發條件欄位）
-    // type 僅用於卡片底色區分：atk(紅) / def(藍) / heal(綠) / util(紫)
-    // =========================================================
+    // 依新版規則統一更新的 60 張牌組
     const CARD_TEMPLATES = [
-      { name: "基礎劍招", count: 10, turns: 1, trigger: "",               value: 3,     effect: "加攻擊",       effectChance: "",       type: "atk"  },
-      { name: "閃避",     count: 9,  turns: 1, trigger: "機率50%",        value: "80%", effect: "減傷",         effectChance: "",       type: "def"  },
-      { name: "物理防禦", count: 4,  turns: 1, trigger: "有屬0%無屬100%", value: "80%", effect: "減傷",         effectChance: "",       type: "def"  },
-      { name: "回復",     count: 4,  turns: 1, trigger: "被攻擊時效果50%", value: 2,     effect: "治療",         effectChance: "",       type: "heal" },
-      { name: "淨化",     count: 4,  turns: 1, trigger: "",               value: "",    effect: "負面效果無效", effectChance: "",       type: "util" },
-      { name: "破甲",     count: 2,  turns: 1, trigger: "",               value: "",    effect: "防禦無效",     effectChance: "",       type: "util" },
-      { name: "禁錮",     count: 2,  turns: 1, trigger: "",               value: "",    effect: "閃避無效",     effectChance: "",       type: "util" },
-      { name: "鋒利",     count: 7,  turns: 1, trigger: "",               value: 2,     effect: "加攻擊",       effectChance: "",       type: "atk"  },
-      { name: "屬性盾",   count: 6,  turns: 1, trigger: "對方攻擊有屬性", value: "all", effect: "反10%傷",      effectChance: "",       type: "def"  },
-      { name: "火附魔",   count: 4,  turns: 1, trigger: "",               value: 1,     effect: "加攻擊",       effectChance: "",       type: "atk"  },
-      { name: "水附魔",   count: 4,  turns: 1, trigger: "",               value: 1,     effect: "治療",         effectChance: "",       type: "heal" },
-      { name: "雷附魔",   count: 4,  turns: 1, trigger: "",               value: 0,     effect: "打斷蓄力",     effectChance: "機率50%", type: "util" }
+      { name: "基礎劍招", count: 10, turns: 1, trigger: "物理屬性",       value: 3,     effect: "攻擊",           effectChance: "", type: "atk"  },
+      { name: "閃避",     count: 9,  turns: 1, trigger: "機率50%",        value: "80%", effect: "減傷",           effectChance: "", type: "def"  },
+      { name: "物理防禦", count: 4,  turns: 1, trigger: "僅擋物理",       value: "80%", effect: "減傷",           effectChance: "", type: "def"  },
+      { name: "回復",     count: 4,  turns: 1, trigger: "被攻擊時減半",   value: 2,     effect: "治療",           effectChance: "", type: "heal" },
+      { name: "淨化",     count: 4,  turns: 1, trigger: "",               value: "",    effect: "清除負面效果",   effectChance: "", type: "util" },
+      { name: "破甲",     count: 2,  turns: 1, trigger: "下張牌有效",     value: "",    effect: "物理防禦/屬性盾無效", effectChance: "", type: "util" },
+      { name: "禁錮",     count: 2,  turns: 1, trigger: "下張牌有效",     value: "",    effect: "閃避無效",       effectChance: "", type: "util" },
+      { name: "鋒利",     count: 7,  turns: 1, trigger: "下張攻擊前",     value: "+2",  effect: "攻擊增傷",       effectChance: "", type: "atk"  },
+      { name: "屬性盾",   count: 6,  turns: 1, trigger: "猜中屬性",       value: "100%",effect: "抵銷並反10%傷",  effectChance: "", type: "def"  },
+      { name: "火附魔",   count: 4,  turns: 1, trigger: "下張攻擊變火",   value: "+10%",effect: "增傷10%",        effectChance: "", type: "util" },
+      { name: "水附魔",   count: 4,  turns: 1, trigger: "下張攻擊變水",   value: "+10%",effect: "增傷10%",        effectChance: "", type: "util" },
+      { name: "雷附魔",   count: 4,  turns: 1, trigger: "下張攻擊變雷",   value: "+10%",effect: "增傷10%",        effectChance: "", type: "util" }
     ];
 
-    // 產生並洗亂 60 張牌庫
+    function round2(n) {
+      return Math.round(n * 100) / 100;
+    }
+
     function createShuffledDeck() {
       const deck = [];
       let uid = 1;
@@ -352,7 +437,6 @@
           });
         }
       }
-      // Fisher-Yates 洗牌演算法
       for (let i = deck.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
         [deck[i], deck[j]] = [deck[j], deck[i]];
@@ -360,14 +444,27 @@
       return deck;
     }
 
+    function createEmptyStatus() {
+      return {
+        enchant: "",       // "" | "火" | "水" | "雷"
+        sharpStacks: 0,    // 鋒利層數（每層 +2）
+        armorBreak: false, // 破甲（下張牌判定結束前：物理防禦、屬性盾無效）
+        root: false        // 禁錮（下張牌判定結束前：閃避無效）
+      };
+    }
+
     function createInitialMatch(actionText = "已建立新對局並洗好雙方 60 張牌庫") {
       return {
         matchId: Date.now(),
         round: 1,
         phase: "playing", // playing | ended
+        endReason: "",
+        resolvedUnits: 0, // 本回合已結算單位數 (0 ~ 5)
+        combatLog: [],
         lastAction: actionText,
         p1: {
           hp: INITIAL_HP,
+          status: createEmptyStatus(),
           deck: createShuffledDeck(),
           hand: [],
           slots: [false, false, false, false, false],
@@ -379,6 +476,7 @@
         },
         p2: {
           hp: INITIAL_HP,
+          status: createEmptyStatus(),
           deck: createShuffledDeck(),
           hand: [],
           slots: [false, false, false, false, false],
@@ -405,6 +503,218 @@
       return result;
     }
 
+    function normalizeStatus(st) {
+      return {
+        enchant: st?.enchant || "",
+        sharpStacks: st?.sharpStacks || 0,
+        armorBreak: !!st?.armorBreak,
+        root: !!st?.root
+      };
+    }
+
+    // =========================================================
+    // 核心：單一單位戰鬥結算（嚴格依指定順序）
+    // 順序：負面效果與被動 -> 附魔及增傷 -> 攻擊類 -> 防禦類 -> 效果類 -> 屬性附魔類
+    // =========================================================
+    function resolveOneUnit(data, unitIdx) {
+      const p1 = data.p1;
+      const p2 = data.p2;
+      p1.status = normalizeStatus(p1.status);
+      p2.status = normalizeStatus(p2.status);
+
+      const s1Slots = toSlots(p1.slots);
+      const s2Slots = toSlots(p2.slots);
+      const c1 = s1Slots[unitIdx];
+      const c2 = s2Slots[unitIdx];
+
+      const logs = toArr(data.combatLog);
+      const unitNo = unitIdx + 1;
+
+      const c1Label = c1 ? (c1.name === "屬性盾" ? `屬性盾(${c1.shieldElement || "火"})` : c1.name) : "無";
+      const c2Label = c2 ? (c2.name === "屬性盾" ? `屬性盾(${c2.shieldElement || "火"})` : c2.name) : "無";
+      logs.push({ type: "header", text: `【第 ${data.round} 回合 - 單位 ${unitNo}】P1 出牌「${c1Label}」 VS P2 出牌「${c2Label}」` });
+
+      // 1. 身上之負面效果以及被動（記錄本單位生效的既有負面效果）
+      const p1Debuff = { armorBreak: p1.status.armorBreak, root: p1.status.root };
+      const p2Debuff = { armorBreak: p2.status.armorBreak, root: p2.status.root };
+
+      const fmtDebuff = (d) => {
+        const list = [];
+        if (d.armorBreak) list.push("破甲");
+        if (d.root) list.push("禁錮");
+        return list.length ? list.join("、") : "無";
+      };
+      logs.push({ type: "info", text: `[1.負面效果檢查] P1(${fmtDebuff(p1Debuff)}) ｜ P2(${fmtDebuff(p2Debuff)})` });
+
+      // 2. 附魔及增傷（若本單位出攻擊類卡牌，計算強化後的最終攻擊力與屬性）
+      const calcAttack = (playerName, card, status) => {
+        if (!card || card.name !== "基礎劍招") return null;
+        let dmg = 3;
+        const notes = ["基礎3"];
+        if (status.sharpStacks > 0) {
+          const bonus = status.sharpStacks * 2;
+          dmg += bonus;
+          notes.push(`鋒利+${bonus}`);
+        }
+        let element = "物理";
+        if (status.enchant) {
+          element = status.enchant;
+          dmg = round2(dmg * 1.1);
+          notes.push(`${element}附魔×1.1`);
+        }
+        logs.push({ type: "info", text: `[2.附魔與增傷] ${playerName} 發動基礎劍招（${notes.join("、")}）→ 【${element}屬性 ${dmg} 傷害】` });
+        return { dmg, element };
+      };
+
+      const atk1 = calcAttack("P1", c1, p1.status);
+      const atk2 = calcAttack("P2", c2, p2.status);
+
+      // 3 & 4. 攻擊類 -> 防禦類
+      const resolveCombatPair = (atkName, defName, atkInfo, defCard, defDebuff) => {
+        const isDefCard = defCard && (defCard.name === "閃避" || defCard.name === "物理防禦" || defCard.name === "屬性盾");
+        if (!atkInfo) {
+          if (isDefCard) {
+            logs.push({ type: "info", text: `[4.防禦類] ${defName} 的「${defCard.name}」因對方此位置非攻擊牌，無效。` });
+          }
+          return { dmgToDef: 0, reflectToAtk: 0 };
+        }
+
+        let dmgToDef = atkInfo.dmg;
+        let reflectToAtk = 0;
+
+        if (defCard && defCard.name === "閃避") {
+          if (defDebuff.root) {
+            logs.push({ type: "info", text: `[4.防禦類] ${defName} 的「閃避」因【禁錮】100% 無效！承受 ${dmgToDef} 點傷害。` });
+          } else if (Math.random() < 0.5) {
+            dmgToDef = round2(atkInfo.dmg * 0.2);
+            logs.push({ type: "info", text: `[4.防禦類] ${defName}「閃避」成功(50%)！抵擋 80% 傷害，僅受 ${dmgToDef} 點傷害。` });
+          } else {
+            logs.push({ type: "info", text: `[4.防禦類] ${defName}「閃避」失敗(50%)！未能減傷，承受 ${dmgToDef} 點傷害。` });
+          }
+        } else if (defCard && defCard.name === "物理防禦") {
+          if (defDebuff.armorBreak) {
+            logs.push({ type: "info", text: `[4.防禦類] ${defName} 的「物理防禦」因【破甲】無效化！承受 ${dmgToDef} 點傷害。` });
+          } else if (atkInfo.element === "物理") {
+            dmgToDef = round2(atkInfo.dmg * 0.2);
+            logs.push({ type: "info", text: `[4.防禦類] ${defName}「物理防禦」生效！抵擋 80% 物理傷害，僅受 ${dmgToDef} 點傷害。` });
+          } else {
+            logs.push({ type: "info", text: `[4.防禦類] ${defName}「物理防禦」無法擋下【${atkInfo.element}屬性】攻擊，承受 ${dmgToDef} 點傷害。` });
+          }
+        } else if (defCard && defCard.name === "屬性盾") {
+          const chosen = defCard.shieldElement || "火";
+          if (defDebuff.armorBreak) {
+            logs.push({ type: "info", text: `[4.防禦類] ${defName} 的「屬性盾(${chosen})」因【破甲】無效化！承受 ${dmgToDef} 點傷害。` });
+          } else if (atkInfo.element === chosen) {
+            dmgToDef = 0;
+            reflectToAtk = round2(atkInfo.dmg * 0.1);
+            logs.push({ type: "info", text: `[4.防禦類] ${defName}「屬性盾(${chosen})」猜中【${atkInfo.element}】！100% 抵銷傷害並反擊 10%（${reflectToAtk} 傷害）給 ${atkName}！` });
+          } else {
+            logs.push({ type: "info", text: `[4.防禦類] ${defName}「屬性盾(${chosen})」猜錯（對方為【${atkInfo.element}】），無效，承受 ${dmgToDef} 點傷害。` });
+          }
+        } else {
+          logs.push({ type: "info", text: `[3.攻擊類] ${atkName} 的【${atkInfo.element}】攻擊直接命中 ${defName}，造成 ${dmgToDef} 點傷害。` });
+        }
+
+        return { dmgToDef, reflectToAtk };
+      };
+
+      const res1vs2 = resolveCombatPair("P1", "P2", atk1, c2, p2Debuff);
+      const res2vs1 = resolveCombatPair("P2", "P1", atk2, c1, p1Debuff);
+
+      // 套用攻防傷害與反傷
+      p2.hp = round2((p2.hp ?? INITIAL_HP) - res1vs2.dmgToDef - res2vs1.reflectToAtk);
+      p1.hp = round2((p1.hp ?? INITIAL_HP) - res2vs1.dmgToDef - res1vs2.reflectToAtk);
+
+      // 打出攻擊牌後，附魔與鋒利失效
+      if (atk1) {
+        p1.status.enchant = "";
+        p1.status.sharpStacks = 0;
+      }
+      if (atk2) {
+        p2.status.enchant = "";
+        p2.status.sharpStacks = 0;
+      }
+
+      // 舊的「破甲／禁錮」持續至本張卡牌判定結束，先清空再套用本單位新賦予的負面效果
+      p1.status.armorBreak = false;
+      p1.status.root = false;
+      p2.status.armorBreak = false;
+      p2.status.root = false;
+
+      // 5. 效果類（回復、破甲、禁錮、鋒利、淨化）
+      const applyEffectNonCleanse = (selfName, oppName, card, selfPlayer, oppPlayer, oppAttacked) => {
+        if (!card) return;
+        if (card.name === "回復") {
+          const heal = oppAttacked ? 1 : 2;
+          const before = selfPlayer.hp;
+          selfPlayer.hp = round2(Math.min(INITIAL_HP, selfPlayer.hp + heal));
+          const reason = oppAttacked ? "對方同位置攻擊，效果減半 +1" : "回復 +2";
+          logs.push({ type: "info", text: `[5.效果類] ${selfName} 發動「回復」（${reason}），HP ${before} → ${selfPlayer.hp}` });
+        } else if (card.name === "破甲") {
+          oppPlayer.status.armorBreak = true;
+          logs.push({ type: "info", text: `[5.效果類] ${selfName} 發動「破甲」，賦予 ${oppName}【破甲】（下張牌物理防禦、屬性盾無效）。` });
+        } else if (card.name === "禁錮") {
+          oppPlayer.status.root = true;
+          logs.push({ type: "info", text: `[5.效果類] ${selfName} 發動「禁錮」，賦予 ${oppName}【禁錮】（下張牌閃避無效）。` });
+        } else if (card.name === "鋒利") {
+          selfPlayer.status.sharpStacks = (selfPlayer.status.sharpStacks || 0) + 1;
+          logs.push({ type: "info", text: `[5.效果類] ${selfName} 發動「鋒利」，下一次攻擊數值 +2（目前累計 +${selfPlayer.status.sharpStacks * 2}）。` });
+        }
+      };
+
+      applyEffectNonCleanse("P1", "P2", c1, p1, p2, !!atk2);
+      applyEffectNonCleanse("P2", "P1", c2, p2, p1, !!atk1);
+
+      // 淨化：去除身上所有負面效果
+      if (c1 && c1.name === "淨化") {
+        p1.status.armorBreak = false;
+        p1.status.root = false;
+        logs.push({ type: "info", text: `[5.效果類] P1 發動「淨化」，清除身上所有負面效果！` });
+      }
+      if (c2 && c2.name === "淨化") {
+        p2.status.armorBreak = false;
+        p2.status.root = false;
+        logs.push({ type: "info", text: `[5.效果類] P2 發動「淨化」，清除身上所有負面效果！` });
+      }
+
+      // 6. 屬性附魔類
+      const applyEnchant = (selfName, card, selfPlayer) => {
+        if (!card) return;
+        const map = { "火附魔": "火", "水附魔": "水", "雷附魔": "雷" };
+        const elem = map[card.name];
+        if (elem) {
+          selfPlayer.status.enchant = elem;
+          logs.push({ type: "info", text: `[6.屬性附魔] ${selfName} 施放「${card.name}」，下次攻擊變更為【${elem}屬性】並增傷 10%（可跨回合）。` });
+        }
+      };
+      applyEnchant("P1", c1, p1);
+      applyEnchant("P2", c2, p2);
+
+      // 血量下限歸零與勝負判定
+      p1.hp = Math.max(0, round2(p1.hp));
+      p2.hp = Math.max(0, round2(p2.hp));
+      logs.push({ type: "hp", text: `→ 單位 ${unitNo} 結算完成：P1 血量 = ${p1.hp} ｜ P2 血量 = ${p2.hp}` });
+
+      data.resolvedUnits = unitNo;
+      data.combatLog = logs;
+      data.lastAction = `已完成第 ${data.round} 回合「單位 ${unitNo}」結算（P1 HP: ${p1.hp} / P2 HP: ${p2.hp}）`;
+
+      if (p1.hp <= 0 || p2.hp <= 0) {
+        data.phase = "ended";
+        if (p1.hp <= 0 && p2.hp <= 0) {
+          data.endReason = `雙方血量同時歸零，平手！`;
+        } else if (p1.hp <= 0) {
+          data.endReason = `玩家 1 (P1) 血量歸零，玩家 2 (P2) 獲勝！`;
+        } else {
+          data.endReason = `玩家 2 (P2) 血量歸零，玩家 1 (P1) 獲勝！`;
+        }
+        logs.push({ type: "header", text: `【遊戲結束】${data.endReason}` });
+        data.lastAction = `遊戲結束！${data.endReason}`;
+      }
+
+      return data;
+    }
+
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getDatabase(app);
@@ -423,12 +733,14 @@
     const oppDeckCountEl = document.getElementById("oppDeckCount");
     const oppDiscardCountEl = document.getElementById("oppDiscardCount");
     const oppStatusTextEl = document.getElementById("oppStatusText");
+    const oppBuffRowEl = document.getElementById("oppBuffRow");
 
     const myRoleNameEl = document.getElementById("myRoleName");
     const myHpEl = document.getElementById("myHp");
     const myDeckCountEl = document.getElementById("myDeckCount");
     const myDiscardCountEl = document.getElementById("myDiscardCount");
     const myStatusTextEl = document.getElementById("myStatusText");
+    const myBuffRowEl = document.getElementById("myBuffRow");
 
     const playPhasePanel = document.getElementById("playPhasePanel");
     const drawDeckBtn = document.getElementById("drawDeckBtn");
@@ -441,15 +753,20 @@
 
     const revealPhasePanel = document.getElementById("revealPhasePanel");
     const revealRoundNum = document.getElementById("revealRoundNum");
+    const resolveProgressText = document.getElementById("resolveProgressText");
     const oppRevealGrid = document.getElementById("oppRevealGrid");
     const myRevealGrid = document.getElementById("myRevealGrid");
+    const resolveUnitBtn = document.getElementById("resolveUnitBtn");
     const confirmNextBtn = document.getElementById("confirmNextBtn");
     const nextWaitMsg = document.getElementById("nextWaitMsg");
+    const combatLogContent = document.getElementById("combatLogContent");
 
     const endPhasePanel = document.getElementById("endPhasePanel");
+    const endReasonText = document.getElementById("endReasonText");
     const totalRoundsEnd = document.getElementById("totalRoundsEnd");
     const restartBtn = document.getElementById("restartBtn");
     const restartWaitMsg = document.getElementById("restartWaitMsg");
+    const endCombatLogContent = document.getElementById("endCombatLogContent");
 
     let myRole = null;
     let oppKey = null;
@@ -559,13 +876,27 @@
       });
     });
 
-    // 動作六：開牌後按確認，雙方皆確認後回到動作一（若牌庫空則進入結束）
+    // 動作六（逐單位結算按鈕）：從單位 1 依序結算到單位 5
+    resolveUnitBtn.addEventListener("click", () => {
+      if (!myRole) return;
+      runTransaction(matchRef, (data) => {
+        if (!data || !data.p1 || !data.p2) return data;
+        if (data.phase === "ended") return data;
+        if (!data.p1.confirmed || !data.p2.confirmed) return data;
+        const done = data.resolvedUnits || 0;
+        if (done >= 5) return data;
+        return resolveOneUnit(data, done);
+      });
+    });
+
+    // 5 個單位皆結算完畢且雙方存活時，雙方按下確認進入下一回合
     confirmNextBtn.addEventListener("click", () => {
       if (!myRole) return;
       runTransaction(matchRef, (data) => {
         if (!data || !data.p1 || !data.p2) return data;
+        if ((data.resolvedUnits || 0) < 5) return data;
         data[myRole.key].nextReady = true;
-        data.lastAction = `${myRole.name} 已確認開牌結果`;
+        data.lastAction = `${myRole.name} 已確認本回合結算結果`;
 
         if (data.p1.nextReady && data.p2.nextReady) {
           const p1Played = toSlots(data.p1.slots).filter(Boolean);
@@ -581,13 +912,21 @@
           data.p2.confirmed = false;
           data.p1.nextReady = false;
           data.p2.nextReady = false;
+          data.resolvedUnits = 0;
 
           const p1Left = toArr(data.p1.deck).length;
           const p2Left = toArr(data.p2.deck).length;
 
           if (p1Left === 0 && p2Left === 0) {
             data.phase = "ended";
-            data.lastAction = "雙方牌庫已抽完，遊戲結束！";
+            if (data.p1.hp > data.p2.hp) {
+              data.endReason = `雙方牌庫抽完！P1 剩餘血量較高（${data.p1.hp} vs ${data.p2.hp}），玩家 1 獲勝！`;
+            } else if (data.p2.hp > data.p1.hp) {
+              data.endReason = `雙方牌庫抽完！P2 剩餘血量較高（${data.p2.hp} vs ${data.p1.hp}），玩家 2 獲勝！`;
+            } else {
+              data.endReason = `雙方牌庫抽完且血量相同（${data.p1.hp} vs ${data.p2.hp}），平手！`;
+            }
+            data.lastAction = `遊戲結束！${data.endReason}`;
           } else {
             data.round = (data.round || 1) + 1;
             data.lastAction = `雙方已確認，進入第 ${data.round} 回合`;
@@ -597,7 +936,7 @@
       });
     });
 
-    // 動作七：遊戲結束後按重來，雙方皆按下則重洗牌庫並重置血量開始新局
+    // 動作七：遊戲結束後按重來，雙方皆按下則重洗牌庫並重置血量與狀態開始新局
     restartBtn.addEventListener("click", () => {
       if (!myRole) return;
       runTransaction(matchRef, (data) => {
@@ -606,14 +945,51 @@
         data.lastAction = `${myRole.name} 已按下重來一局`;
 
         if (data.p1.restartReady && data.p2.restartReady) {
-          return createInitialMatch("雙方皆已按下重來，重置血量並重新洗牌開始新對局！");
+          return createInitialMatch("雙方皆已按下重來，重置血量與狀態並重新洗牌開始新對局！");
         }
         return data;
       });
     });
 
-    // 繪製單張卡牌內容（顯示卡名、效果與數值、觸發方式／機率）
-    function createCardContent(card) {
+    function renderBuffTags(container, rawStatus) {
+      const st = normalizeStatus(rawStatus);
+      const tags = [];
+      tags.push(
+        st.enchant
+          ? `<span class="tag tag-enchant">附魔：${st.enchant} (+10%)</span>`
+          : `<span class="tag">附魔：無</span>`
+      );
+      tags.push(
+        st.sharpStacks > 0
+          ? `<span class="tag tag-buff">增傷：鋒利 +${st.sharpStacks * 2}</span>`
+          : `<span class="tag">增傷：無</span>`
+      );
+      const debuffs = [];
+      if (st.armorBreak) debuffs.push("破甲");
+      if (st.root) debuffs.push("禁錮");
+      tags.push(
+        debuffs.length > 0
+          ? `<span class="tag tag-debuff">負面效果：${debuffs.join("、")}</span>`
+          : `<span class="tag">負面效果：無</span>`
+      );
+      container.innerHTML = tags.join("");
+    }
+
+    function renderCombatLog(container, rawLog) {
+      const logs = toArr(rawLog);
+      if (logs.length === 0) {
+        container.innerHTML = "等待開始結算單位 1...";
+        return;
+      }
+      container.innerHTML = logs.map((item) => {
+        if (item.type === "header") return `<div class="log-unit-header">${item.text}</div>`;
+        if (item.type === "hp") return `<div class="log-hp">${item.text}</div>`;
+        return `<div>${item.text}</div>`;
+      }).join("");
+      container.parentElement.scrollTop = container.parentElement.scrollHeight;
+    }
+
+    function createCardContent(card, showShieldChoice = false) {
       const typeMap = {
         atk: "card-atk",
         def: "card-def",
@@ -625,7 +1001,9 @@
       const mainLine = `${card.effect || ""}${valText}`.trim();
       const metaParts = [];
       if (card.trigger) metaParts.push(card.trigger);
-      if (card.effectChance) metaParts.push(card.effectChance);
+      if (showShieldChoice && card.name === "屬性盾") {
+        metaParts.push(`阻擋：${card.shieldElement || "火"}`);
+      }
       const metaHtml = metaParts.length > 0
         ? `<div class="card-meta">${metaParts.join("｜")}</div>`
         : "";
@@ -645,6 +1023,7 @@
       const myDiscard = toArr(myState.discard);
       const oppDeck = toArr(oppState.deck);
       const oppDiscard = toArr(oppState.discard);
+      const resolvedUnits = matchData.resolvedUnits || 0;
 
       lastActionEl.textContent = matchData.lastAction || "尚無紀錄";
       roundNumEl.textContent = matchData.round || 1;
@@ -656,12 +1035,20 @@
       oppDeckCountEl.textContent = oppDeck.length;
       oppDiscardCountEl.textContent = oppDiscard.length;
 
+      renderBuffTags(myBuffRowEl, myState.status);
+      renderBuffTags(oppBuffRowEl, oppState.status);
+
       if (matchData.phase === "ended") {
         oppStatusTextEl.textContent = oppState.restartReady ? "已按下重來" : "等待按下重來";
         myStatusTextEl.textContent = myState.restartReady ? "已按下重來" : "請決定是否重來";
       } else if (myState.confirmed && oppState.confirmed) {
-        oppStatusTextEl.textContent = oppState.nextReady ? "已確認開牌" : "檢視開牌結果中";
-        myStatusTextEl.textContent = myState.nextReady ? "已確認開牌" : "請檢視開牌並按確認";
+        if (resolvedUnits < 5) {
+          oppStatusTextEl.textContent = `結算進行中（已完成 ${resolvedUnits}/5 單位）`;
+          myStatusTextEl.textContent = `請點擊結算單位 ${resolvedUnits + 1}`;
+        } else {
+          oppStatusTextEl.textContent = oppState.nextReady ? "已確認進入下回合" : "檢視結算結果中";
+          myStatusTextEl.textContent = myState.nextReady ? "已確認進入下回合" : "本回合結算完畢，請按確認";
+        }
       } else {
         oppStatusTextEl.textContent = oppState.confirmed
           ? "已放完 5 張牌並鎖定確認"
@@ -676,9 +1063,11 @@
         revealPhasePanel.classList.add("hidden");
         endPhasePanel.classList.remove("hidden");
 
+        endReasonText.textContent = matchData.endReason || "雙方牌庫皆已抽完！";
         totalRoundsEnd.textContent = matchData.round || 1;
         restartBtn.disabled = !!myState.restartReady;
         restartWaitMsg.classList.toggle("hidden", !myState.restartReady);
+        renderCombatLog(endCombatLogContent, matchData.combatLog);
         return;
       }
 
@@ -689,11 +1078,22 @@
         revealPhasePanel.classList.remove("hidden");
 
         revealRoundNum.textContent = matchData.round || 1;
-        renderRevealRow(oppRevealGrid, toSlots(oppState.slots));
-        renderRevealRow(myRevealGrid, toSlots(myState.slots));
+        resolveProgressText.textContent = `${resolvedUnits} / 5`;
+        renderRevealRow(oppRevealGrid, toSlots(oppState.slots), resolvedUnits);
+        renderRevealRow(myRevealGrid, toSlots(myState.slots), resolvedUnits);
+        renderCombatLog(combatLogContent, matchData.combatLog);
 
-        confirmNextBtn.disabled = !!myState.nextReady;
-        nextWaitMsg.classList.toggle("hidden", !myState.nextReady);
+        if (resolvedUnits < 5) {
+          resolveUnitBtn.classList.remove("hidden");
+          resolveUnitBtn.textContent = `結算單位 ${resolvedUnits + 1}`;
+          confirmNextBtn.classList.add("hidden");
+          nextWaitMsg.classList.add("hidden");
+        } else {
+          resolveUnitBtn.classList.add("hidden");
+          confirmNextBtn.classList.remove("hidden");
+          confirmNextBtn.disabled = !!myState.nextReady;
+          nextWaitMsg.classList.toggle("hidden", !myState.nextReady);
+        }
         return;
       }
 
@@ -723,9 +1123,29 @@
         div.className = "slot";
         const label = `<span class="slot-label">位置 ${idx + 1}</span>`;
         if (card) {
-          const info = createCardContent(card);
+          const info = createCardContent(card, locked);
           div.classList.add("filled", info.typeClass);
           div.innerHTML = label + info.html;
+
+          // 若為屬性盾且尚未鎖定，顯示火／水／雷選擇按鈕
+          if (!locked && card.name === "屬性盾") {
+            const picker = document.createElement("div");
+            picker.className = "shield-picker";
+            ["火", "水", "雷"].forEach((elem) => {
+              const btn = document.createElement("button");
+              btn.type = "button";
+              btn.className = "shield-btn" + ((card.shieldElement || "火") === elem ? " selected" : "");
+              btn.textContent = elem;
+              btn.addEventListener("click", (e) => {
+                e.stopPropagation();
+                localSlots[idx] = { ...card, shieldElement: elem };
+                renderGame();
+              });
+              picker.appendChild(btn);
+            });
+            div.appendChild(picker);
+          }
+
           if (!locked) {
             div.title = "點擊退回手牌";
             div.addEventListener("click", () => {
@@ -754,28 +1174,33 @@
       const availableHand = hand.filter((c) => !placedIds.has(c.id));
 
       availableHand.forEach((card) => {
-        const info = createCardContent(card);
+        const info = createCardContent(card, false);
         const btn = document.createElement("div");
         btn.className = `card-item ${info.typeClass}`;
         btn.innerHTML = info.html;
         btn.addEventListener("click", () => {
           const emptyIndex = localSlots.findIndex((s) => !s);
           if (emptyIndex === -1) return;
-          localSlots[emptyIndex] = card;
+          const placedCard = card.name === "屬性盾"
+            ? { ...card, shieldElement: "火" }
+            : card;
+          localSlots[emptyIndex] = placedCard;
           renderGame();
         });
         myHandGrid.appendChild(btn);
       });
     }
 
-    function renderRevealRow(container, slots) {
+    function renderRevealRow(container, slots, resolvedUnits) {
       container.innerHTML = "";
       slots.forEach((card, idx) => {
         const div = document.createElement("div");
         div.className = "slot filled";
-        const label = `<span class="slot-label">位置 ${idx + 1}</span>`;
+        if (idx < resolvedUnits) div.classList.add("done-unit");
+        if (idx === resolvedUnits && resolvedUnits < 5) div.classList.add("active-unit");
+        const label = `<span class="slot-label">單位 ${idx + 1}</span>`;
         if (card) {
-          const info = createCardContent(card);
+          const info = createCardContent(card, true);
           div.classList.add(info.typeClass);
           div.innerHTML = label + info.html;
         } else {
