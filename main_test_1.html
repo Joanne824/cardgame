@@ -4,9 +4,152 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>1v1 卡牌對戰數值測試</title>
+  <style>
+    body { font-family: sans-serif; max-width: 640px; margin: 32px auto; padding: 0 16px; line-height: 1.6; }
+    .card { border: 1px solid #ddd; border-radius: 8px; padding: 16px; margin-bottom: 16px; }
+    input { padding: 8px; margin: 4px 0 10px; width: 100%; box-sizing: border-box; }
+    button { padding: 8px 14px; margin-right: 6px; cursor: pointer; }
+    .hidden { display: none; }
+    .row { display: flex; gap: 16px; }
+    .col { flex: 1; background: #f8f9fa; padding: 12px; border-radius: 6px; }
+    #errorMsg { color: #c62828; }
+  </style>
 </head>
 <body>
-  <h1>1v1 卡牌對戰測試網站</h1>
-  <p>連線成功，準備進入雙人登入與數值測試開發。</p>
+  <h1>1v1 卡牌對戰數值測試</h1>
+
+  <!-- 登入畫面（僅供固定帳號登入，不開放註冊） -->
+  <div id="loginBox" class="card">
+    <h2>測試人員登入</h2>
+    <label>帳號 (Email)</label>
+    <input id="emailInput" type="email" placeholder="例如：p1@test.com" />
+    <label>密碼</label>
+    <input id="passwordInput" type="password" placeholder="輸入密碼" />
+    <button id="loginBtn">登入</button>
+    <p id="errorMsg"></p>
+  </div>
+
+  <!-- 登入後的雙人即時同步測試區 -->
+  <div id="gameBox" class="hidden">
+    <div class="card">
+      <p>目前登入身分：<strong id="userInfo"></strong></p>
+      <button id="logoutBtn">登出</button>
+      <button id="resetBtn">重置雙方數值</button>
+    </div>
+
+    <div class="card">
+      <h2>雙人即時同步測試（點擊按鈕，對方畫面會立即變動）</h2>
+      <div class="row">
+        <div class="col">
+          <h3>玩家 1 (P1)</h3>
+          <p>HP：<strong id="p1Hp">30</strong></p>
+          <button id="p1Minus">-1 HP</button>
+          <button id="p1Plus">+1 HP</button>
+        </div>
+        <div class="col">
+          <h3>玩家 2 (P2)</h3>
+          <p>HP：<strong id="p2Hp">30</strong></p>
+          <button id="p2Minus">-1 HP</button>
+          <button id="p2Plus">+1 HP</button>
+        </div>
+      </div>
+      <p>最後操作紀錄：<span id="lastAction">尚無紀錄</span></p>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-app.js";
+    import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-auth.js";
+    import { getDatabase, ref, onValue, update, set } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyC181fUSY9S7iRJxcoYfe37FBk5zT0_z6M",
+      authDomain: "cardgame-pvp.firebaseapp.com",
+      databaseURL: "https://cardgame-pvp-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "cardgame-pvp",
+      storageBucket: "cardgame-pvp.firebasestorage.app",
+      messagingSenderId: "414143802572",
+      appId: "1:414143802572:web:a48c2398c23d8e22116669",
+      measurementId: "G-67RC3QVKGK"
+    };
+
+    // 請改成你在 Firebase Authentication 建立的兩組固定測試帳號
+    const PLAYER_ROLES = {
+      "p1@test.com": "玩家 1 (P1)",
+      "p2@test.com": "玩家 2 (P2)"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getDatabase(app);
+    const matchRef = ref(db, "test_match");
+
+    const loginBox = document.getElementById("loginBox");
+    const gameBox = document.getElementById("gameBox");
+    const errorMsg = document.getElementById("errorMsg");
+    const userInfo = document.getElementById("userInfo");
+    const p1HpEl = document.getElementById("p1Hp");
+    const p2HpEl = document.getElementById("p2Hp");
+    const lastActionEl = document.getElementById("lastAction");
+
+    let currentState = { p1Hp: 30, p2Hp: 30, lastAction: "尚未開始" };
+    let unsubscribeMatch = null;
+
+    document.getElementById("loginBtn").addEventListener("click", async () => {
+      errorMsg.textContent = "";
+      const email = document.getElementById("emailInput").value.trim();
+      const password = document.getElementById("passwordInput").value;
+      try {
+        await signInWithEmailAndPassword(auth, email, password);
+      } catch (err) {
+        errorMsg.textContent = "登入失敗，請確認帳號密碼是否正確。";
+      }
+    });
+
+    document.getElementById("logoutBtn").addEventListener("click", () => signOut(auth));
+
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        const role = PLAYER_ROLES[user.email] || user.email;
+        userInfo.textContent = `${role} (${user.email})`;
+        loginBox.classList.add("hidden");
+        gameBox.classList.remove("hidden");
+
+        unsubscribeMatch = onValue(matchRef, (snapshot) => {
+          const data = snapshot.val();
+          if (data) {
+            currentState = data;
+            p1HpEl.textContent = data.p1Hp ?? 30;
+            p2HpEl.textContent = data.p2Hp ?? 30;
+            lastActionEl.textContent = data.lastAction ?? "尚無紀錄";
+          }
+        });
+      } else {
+        if (unsubscribeMatch) unsubscribeMatch();
+        loginBox.classList.remove("hidden");
+        gameBox.classList.add("hidden");
+      }
+    });
+
+    function changeHp(target, delta) {
+      const user = auth.currentUser;
+      if (!user) return;
+      const role = PLAYER_ROLES[user.email] || user.email;
+      const nextValue = (currentState[target] ?? 30) + delta;
+      update(matchRef, {
+        [target]: nextValue,
+        lastAction: `${role} 將 ${target === "p1Hp" ? "P1" : "P2"} HP 調整為 ${nextValue}`
+      });
+    }
+
+    document.getElementById("p1Minus").addEventListener("click", () => changeHp("p1Hp", -1));
+    document.getElementById("p1Plus").addEventListener("click", () => changeHp("p1Hp", 1));
+    document.getElementById("p2Minus").addEventListener("click", () => changeHp("p2Hp", -1));
+    document.getElementById("p2Plus").addEventListener("click", () => changeHp("p2Hp", 1));
+
+    document.getElementById("resetBtn").addEventListener("click", () => {
+      set(matchRef, { p1Hp: 30, p2Hp: 30, lastAction: "雙方數值已重置為 30" });
+    });
+  </script>
 </body>
 </html>
