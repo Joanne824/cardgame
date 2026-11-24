@@ -751,3 +751,39 @@
         return;
       }
       const placedIds = new Set(localSlots.filter(Boolean).map((c) => c.id));
+      const availableHand = hand.filter((c) => !placedIds.has(c.id));
+
+      availableHand.forEach((card) => {
+        const info = createCardContent(card);
+        const btn = document.createElement("div");
+        btn.className = `card-item ${info.typeClass}`;
+        btn.innerHTML = info.html;
+        btn.addEventListener("click", () => {
+          const emptyIndex = localSlots.findIndex((s) => !s);
+          if (emptyIndex === -1) return;
+          localSlots[emptyIndex] = card;
+          renderGame();
+        });
+        myHandGrid.appendChild(btn);
+      });
+    }
+
+    function renderRevealRow(container, slots) {
+      container.innerHTML = "";
+      slots.forEach((card, idx) => {
+        const div = document.createElement("div");
+        div.className = "slot filled";
+        const label = `<span class="slot-label">位置 ${idx + 1}</span>`;
+        if (card) {
+          const info = createCardContent(card);
+          div.classList.add(info.typeClass);
+          div.innerHTML = label + info.html;
+        } else {
+          div.innerHTML = `${label}<span>無</span>`;
+        }
+        container.appendChild(div);
+      });
+    }
+  </script>
+</body>
+</html>
