@@ -8,7 +8,7 @@
     * { box-sizing: border-box; }
     body {
       font-family: system-ui, -apple-system, sans-serif;
-      max-width: 900px;
+      max-width: 960px;
       margin: 20px auto;
       padding: 0 16px 40px;
       background: #f4f6f8;
@@ -74,11 +74,21 @@
     }
     .status-box {
       flex: 1;
-      min-width: 220px;
+      min-width: 240px;
       background: #f8fafc;
       border: 1px solid #e2e8f0;
       border-radius: 8px;
       padding: 12px;
+    }
+    .hp-badge {
+      display: inline-block;
+      margin-left: 8px;
+      padding: 2px 10px;
+      border-radius: 999px;
+      background: #fee2e2;
+      color: #b91c1c;
+      font-weight: 700;
+      font-size: 14px;
     }
     .deck-area {
       display: flex;
@@ -110,10 +120,10 @@
       margin: 12px 0;
     }
     .slot {
-      min-height: 115px;
+      min-height: 132px;
       border: 2px dashed #94a3b8;
       border-radius: 8px;
-      padding: 8px;
+      padding: 22px 8px 8px;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -142,8 +152,8 @@
       margin-top: 10px;
     }
     .card-item {
-      width: 110px;
-      min-height: 96px;
+      width: 130px;
+      min-height: 112px;
       border-radius: 8px;
       padding: 10px 8px;
       border: 2px solid #94a3b8;
@@ -159,8 +169,11 @@
     .card-item:hover { transform: translateY(-3px); }
     .card-atk { border-color: #ef4444; background: #fef2f2; }
     .card-def { border-color: #3b82f6; background: #eff6ff; }
+    .card-heal { border-color: #16a34a; background: #f0fdf4; }
+    .card-util { border-color: #a855f7; background: #faf5ff; }
     .card-name { font-weight: 700; font-size: 15px; }
-    .card-desc { font-size: 12px; color: #555; margin-top: 4px; }
+    .card-desc { font-size: 12px; color: #333; margin-top: 4px; font-weight: 600; }
+    .card-meta { font-size: 11px; color: #64748b; margin-top: 3px; }
 
     .reveal-title {
       font-size: 15px;
@@ -205,15 +218,21 @@
       </div>
     </div>
 
-    <!-- 雙方資訊（不透漏對手手牌與選擇） -->
+    <!-- 雙方資訊（含血量 10，不透漏對手手牌與選擇） -->
     <div class="status-row">
       <div class="status-box">
-        <strong>對手狀態（<span id="oppRoleName">對手</span>）</strong>
+        <div>
+          <strong>對手狀態（<span id="oppRoleName">對手</span>）</strong>
+          <span class="hp-badge">HP：<span id="oppHp">10</span></span>
+        </div>
         <div>牌庫剩餘：<span id="oppDeckCount">60</span> 張 ｜ 棄牌堆：<span id="oppDiscardCount">0</span> 張</div>
         <div>目前進度：<strong id="oppStatusText">等待中</strong></div>
       </div>
       <div class="status-box">
-        <strong>我方狀態（<span id="myRoleName">我方</span>）</strong>
+        <div>
+          <strong>我方狀態（<span id="myRoleName">我方</span>）</strong>
+          <span class="hp-badge">HP：<span id="myHp">10</span></span>
+        </div>
         <div>牌庫剩餘：<span id="myDeckCount">60</span> 張 ｜ 棄牌堆：<span id="myDiscardCount">0</span> 張</div>
         <div>目前進度：<strong id="myStatusText">請點擊牌庫抽牌</strong></div>
       </div>
@@ -292,11 +311,27 @@
     };
 
     // =========================================================
-    // TODO 2：在這裡自訂 60 張牌的名稱、類型、內容與張數
+    // 玩家初始血量
+    // =========================================================
+    const INITIAL_HP = 10;
+
+    // =========================================================
+    // 依表格設定的 60 張牌組（含完整數值與觸發條件欄位）
+    // type 僅用於卡片底色區分：atk(紅) / def(藍) / heal(綠) / util(紫)
     // =========================================================
     const CARD_TEMPLATES = [
-      { name: "攻擊", type: "atk", desc: "攻擊牌內容待填", count: 30 },
-      { name: "防禦", type: "def", desc: "防禦牌內容待填", count: 30 }
+      { name: "基礎劍招", count: 10, turns: 1, trigger: "",               value: 3,     effect: "加攻擊",       effectChance: "",       type: "atk"  },
+      { name: "閃避",     count: 9,  turns: 1, trigger: "機率50%",        value: "80%", effect: "減傷",         effectChance: "",       type: "def"  },
+      { name: "物理防禦", count: 4,  turns: 1, trigger: "有屬0%無屬100%", value: "80%", effect: "減傷",         effectChance: "",       type: "def"  },
+      { name: "回復",     count: 4,  turns: 1, trigger: "被攻擊時效果50%", value: 2,     effect: "治療",         effectChance: "",       type: "heal" },
+      { name: "淨化",     count: 4,  turns: 1, trigger: "",               value: "",    effect: "負面效果無效", effectChance: "",       type: "util" },
+      { name: "破甲",     count: 2,  turns: 1, trigger: "",               value: "",    effect: "防禦無效",     effectChance: "",       type: "util" },
+      { name: "禁錮",     count: 2,  turns: 1, trigger: "",               value: "",    effect: "閃避無效",     effectChance: "",       type: "util" },
+      { name: "鋒利",     count: 7,  turns: 1, trigger: "",               value: 2,     effect: "加攻擊",       effectChance: "",       type: "atk"  },
+      { name: "屬性盾",   count: 6,  turns: 1, trigger: "對方攻擊有屬性", value: "all", effect: "反10%傷",      effectChance: "",       type: "def"  },
+      { name: "火附魔",   count: 4,  turns: 1, trigger: "",               value: 1,     effect: "加攻擊",       effectChance: "",       type: "atk"  },
+      { name: "水附魔",   count: 4,  turns: 1, trigger: "",               value: 1,     effect: "治療",         effectChance: "",       type: "heal" },
+      { name: "雷附魔",   count: 4,  turns: 1, trigger: "",               value: 0,     effect: "打斷蓄力",     effectChance: "機率50%", type: "util" }
     ];
 
     // 產生並洗亂 60 張牌庫
@@ -308,8 +343,12 @@
           deck.push({
             id: `c_${uid++}_${Math.random().toString(36).slice(2, 6)}`,
             name: tpl.name,
-            type: tpl.type,
-            desc: tpl.desc
+            turns: tpl.turns,
+            trigger: tpl.trigger,
+            value: tpl.value,
+            effect: tpl.effect,
+            effectChance: tpl.effectChance,
+            type: tpl.type
           });
         }
       }
@@ -328,6 +367,7 @@
         phase: "playing", // playing | ended
         lastAction: actionText,
         p1: {
+          hp: INITIAL_HP,
           deck: createShuffledDeck(),
           hand: [],
           slots: [false, false, false, false, false],
@@ -338,6 +378,7 @@
           restartReady: false
         },
         p2: {
+          hp: INITIAL_HP,
           deck: createShuffledDeck(),
           hand: [],
           slots: [false, false, false, false, false],
@@ -350,7 +391,6 @@
       };
     }
 
-    // Firebase 陣列安全轉換工具
     function toArr(val) {
       if (!val) return [];
       return Array.isArray(val) ? val : Object.values(val);
@@ -379,11 +419,13 @@
     const roundNumEl = document.getElementById("roundNum");
 
     const oppRoleNameEl = document.getElementById("oppRoleName");
+    const oppHpEl = document.getElementById("oppHp");
     const oppDeckCountEl = document.getElementById("oppDeckCount");
     const oppDiscardCountEl = document.getElementById("oppDiscardCount");
     const oppStatusTextEl = document.getElementById("oppStatusText");
 
     const myRoleNameEl = document.getElementById("myRoleName");
+    const myHpEl = document.getElementById("myHp");
     const myDeckCountEl = document.getElementById("myDeckCount");
     const myDiscardCountEl = document.getElementById("myDiscardCount");
     const myStatusTextEl = document.getElementById("myStatusText");
@@ -409,16 +451,13 @@
     const restartBtn = document.getElementById("restartBtn");
     const restartWaitMsg = document.getElementById("restartWaitMsg");
 
-    let myRole = null;       // { key: "p1"|"p2", name: "..." }
-    let oppKey = null;       // "p2"|"p1"
+    let myRole = null;
+    let oppKey = null;
     let matchData = null;
     let unsubscribeMatch = null;
-
-    // 本地暫存：尚未按確認前，玩家挑選放入 5 個空槽的卡牌（不提前送出給對手）
     let localSlots = [null, null, null, null, null];
     let lastRoundToken = "";
 
-    // 登入與登出
     document.getElementById("loginBtn").addEventListener("click", async () => {
       errorMsg.textContent = "";
       const email = document.getElementById("emailInput").value.trim().toLowerCase();
@@ -459,7 +498,6 @@
         unsubscribeMatch = onValue(matchRef, (snapshot) => {
           const data = snapshot.val();
           if (!data || !data.p1 || !data.p2) {
-            // 若資料庫尚無對局資料，自動建立第一局
             set(matchRef, createInitialMatch("系統自動建立新對局並洗好雙方 60 張牌庫"));
             return;
           }
@@ -475,7 +513,6 @@
         if (unsubscribeMatch) unsubscribeMatch();
         matchData = null;
         myRole = null;
-        loginBox.classList.add("hidden") ? loginBox.classList.remove("hidden") : null;
         loginBox.classList.remove("hidden");
         gameBox.classList.add("hidden");
       }
@@ -531,7 +568,6 @@
         data.lastAction = `${myRole.name} 已確認開牌結果`;
 
         if (data.p1.nextReady && data.p2.nextReady) {
-          // 將本回合雙方打出的 5 張牌移入各自棄牌堆
           const p1Played = toSlots(data.p1.slots).filter(Boolean);
           const p2Played = toSlots(data.p2.slots).filter(Boolean);
           data.p1.discard = [...toArr(data.p1.discard), ...p1Played];
@@ -561,7 +597,7 @@
       });
     });
 
-    // 動作七：遊戲結束後按重來，雙方皆按下則重洗牌庫開始新局
+    // 動作七：遊戲結束後按重來，雙方皆按下則重洗牌庫並重置血量開始新局
     restartBtn.addEventListener("click", () => {
       if (!myRole) return;
       runTransaction(matchRef, (data) => {
@@ -570,22 +606,36 @@
         data.lastAction = `${myRole.name} 已按下重來一局`;
 
         if (data.p1.restartReady && data.p2.restartReady) {
-          return createInitialMatch("雙方皆已按下重來，重新洗牌開始新對局！");
+          return createInitialMatch("雙方皆已按下重來，重置血量並重新洗牌開始新對局！");
         }
         return data;
       });
     });
 
-    // 繪製單張卡牌 HTML
+    // 繪製單張卡牌內容（顯示卡名、效果與數值、觸發方式／機率）
     function createCardContent(card) {
-      const typeClass = card.type === "atk" ? "card-atk" : "card-def";
+      const typeMap = {
+        atk: "card-atk",
+        def: "card-def",
+        heal: "card-heal",
+        util: "card-util"
+      };
+      const typeClass = typeMap[card.type] || "card-util";
+      const valText = card.value !== "" && card.value !== undefined ? ` ${card.value}` : "";
+      const mainLine = `${card.effect || ""}${valText}`.trim();
+      const metaParts = [];
+      if (card.trigger) metaParts.push(card.trigger);
+      if (card.effectChance) metaParts.push(card.effectChance);
+      const metaHtml = metaParts.length > 0
+        ? `<div class="card-meta">${metaParts.join("｜")}</div>`
+        : "";
+
       return {
         typeClass,
-        html: `<div class="card-name">${card.name}</div><div class="card-desc">${card.desc || ""}</div>`
+        html: `<div class="card-name">${card.name}</div><div class="card-desc">${mainLine}</div>${metaHtml}`
       };
     }
 
-    // 主畫面渲染
     function renderGame() {
       if (!matchData || !myRole) return;
       const myState = matchData[myRole.key];
@@ -599,12 +649,13 @@
       lastActionEl.textContent = matchData.lastAction || "尚無紀錄";
       roundNumEl.textContent = matchData.round || 1;
 
+      myHpEl.textContent = myState.hp ?? INITIAL_HP;
+      oppHpEl.textContent = oppState.hp ?? INITIAL_HP;
       myDeckCountEl.textContent = myDeck.length;
       myDiscardCountEl.textContent = myDiscard.length;
       oppDeckCountEl.textContent = oppDeck.length;
       oppDiscardCountEl.textContent = oppDiscard.length;
 
-      // 對手進度文字（絕不透漏牌庫/手牌/選擇內容）
       if (matchData.phase === "ended") {
         oppStatusTextEl.textContent = oppState.restartReady ? "已按下重來" : "等待按下重來";
         myStatusTextEl.textContent = myState.restartReady ? "已按下重來" : "請決定是否重來";
@@ -620,7 +671,6 @@
           : (myState.drawn ? "請挑選 5 張牌放入空槽" : "請點擊牌庫抽 10 張牌");
       }
 
-      // 切換三個畫面狀態：結束 / 開牌公布 / 抽牌與選牌
       if (matchData.phase === "ended") {
         playPhasePanel.classList.add("hidden");
         revealPhasePanel.classList.add("hidden");
@@ -647,7 +697,6 @@
         return;
       }
 
-      // 動作一～動作四畫面
       revealPhasePanel.classList.add("hidden");
       endPhasePanel.classList.add("hidden");
       playPhasePanel.classList.remove("hidden");
@@ -702,39 +751,3 @@
         return;
       }
       const placedIds = new Set(localSlots.filter(Boolean).map((c) => c.id));
-      const availableHand = hand.filter((c) => !placedIds.has(c.id));
-
-      availableHand.forEach((card) => {
-        const info = createCardContent(card);
-        const btn = document.createElement("div");
-        btn.className = `card-item ${info.typeClass}`;
-        btn.innerHTML = info.html;
-        btn.addEventListener("click", () => {
-          const emptyIndex = localSlots.findIndex((s) => !s);
-          if (emptyIndex === -1) return;
-          localSlots[emptyIndex] = card;
-          renderGame();
-        });
-        myHandGrid.appendChild(btn);
-      });
-    }
-
-    function renderRevealRow(container, slots) {
-      container.innerHTML = "";
-      slots.forEach((card, idx) => {
-        const div = document.createElement("div");
-        div.className = "slot filled";
-        const label = `<span class="slot-label">位置 ${idx + 1}</span>`;
-        if (card) {
-          const info = createCardContent(card);
-          div.classList.add(info.typeClass);
-          div.innerHTML = label + info.html;
-        } else {
-          div.innerHTML = `${label}<span>無</span>`;
-        }
-        container.appendChild(div);
-      });
-    }
-  </script>
-</body>
-</html>
