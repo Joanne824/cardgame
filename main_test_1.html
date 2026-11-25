@@ -733,7 +733,134 @@
         if (!tpl || !qty || qty <= 0) return;
         for (let i = 0; i < qty; i++) {
           deck.push({
-            id: `c_${uid++}_${Math.random().toString(36).slice(2, 6)}`, name: tpl.name, turns: tpl.turns, trigger: tpl.trigger, value: tpl.value, effect: tpl.effect, effectChance: tpl.effectChance, type: tpl.type }); } }); return shuffleArray(deck); }  function createEmptyStatus() { return { enchant: "", sharpStacks: 0, armorBreak: false, root: false, skyState: "", moonPhase: "", slotMoonPhases: ["", "", "", "", ""], moonStacks: 0, dodgeBonus: 0, moonEnhanced: false }; }  function createInitialMatch(actionText = "已建立新對局，請雙方選擇特性並組建 60 張牌庫") { return { matchId: Date.now(), round: 1, phase: "setup", endReason: "", resolvedUnits: 0, combatLog: [], lastAction: actionText, p1: { hp: INITIAL_HP, maxHp: INITIAL_HP, trait: "無", setupReady: false, status: createEmptyStatus(), deck: [], hand: [], drawnHand: [], slots: [false, false, false, false, false], discard: [], drawn: false, confirmed: false, nextReady: false, restartReady: false }, p2: { hp: INITIAL_HP, maxHp: INITIAL_HP, trait: "無", setupReady: false, status: createEmptyStatus(), deck: [], hand: [], drawnHand: [], slots: [false, false, false, false, false], discard: [], drawn: false, confirmed: false, nextReady: false, restartReady: false } }; }  function toArr(val) { if (!val) return []; return Array.isArray(val) ? val : Object.values(val); }  function toSlots(val) { const result = [null, null, null, null, null]; if (!val) return result; for (let i = 0; i < 5; i++) { result[i] = val[i] && val[i] !== false ? val[i] : null; } return result; }  function normalizeSlotPhases(arr) { const res = ["", "", "", "", ""]; if (!arr) return res; for (let i = 0; i < 5; i++) { res[i] = arr[i] \vert{}\vert{} ""; } return res; }  function normalizeStatus(st) { return { enchant: st?.enchant \vert{}\vert{} "", sharpStacks: st?.sharpStacks \vert{}\vert{} 0, armorBreak: !!st?.armorBreak, root: !!st?.root, skyState: st?.skyState \vert{}\vert{} "", moonPhase: st?.moonPhase \vert{}\vert{} "", slotMoonPhases: normalizeSlotPhases(st?.slotMoonPhases), moonStacks: st?.moonStacks \vert{}\vert{} 0, dodgeBonus: st?.dodgeBonus \vert{}\vert{} 0, moonEnhanced: !!st?.moonEnhanced }; }  // 每輪次開始時，各自獨立為【月華一】玩家判定 80\% 夜幕 / 20\% 白晝，並預先抽出 5 個位置的月相 function rollRoundStartTraits(data) { const logs = toArr(data.combatLog); const applyForPlayer = (player, name) => { player.status = normalizeStatus(player.status); player.status.dodgeBonus = 0; player.status.moonEnhanced = false; player.status.moonPhase = ""; if (player.trait === "月華一") { const isNight = Math.random() < 0.8; player.status.skyState = isNight ? "夜幕" : "白晝"; if (isNight) { const phases = [0, 1, 2, 3, 4].map(() => rollSingleMoonPhase()); player.status.slotMoonPhases = phases; logs.push({ type: "info", text: `[輪次開始｜月華一] ${name} 獨立判定 →【夜幕】（位置 1~5 月相：${phases.join(" / ")}；目前【月】：${player.status.moonStacks} 層）。`
+            id: `c_${uid++}_${Math.random().toString(36).slice(2, 6)}`,
+            name: tpl.name,
+            turns: tpl.turns,
+            trigger: tpl.trigger,
+            value: tpl.value,
+            effect: tpl.effect,
+            effectChance: tpl.effectChance,
+            type: tpl.type
+          });
+        }
+      });
+      return shuffleArray(deck);
+    }
+
+    function createEmptyStatus() {
+      return {
+        enchant: "",
+        sharpStacks: 0,
+        armorBreak: false,
+        root: false,
+        skyState: "",
+        moonPhase: "",
+        slotMoonPhases: ["", "", "", "", ""],
+        moonStacks: 0,
+        dodgeBonus: 0,
+        moonEnhanced: false
+      };
+    }
+
+    function createInitialMatch(actionText = "已建立新對局，請雙方選擇特性並組建 60 張牌庫") {
+      return {
+        matchId: Date.now(),
+        round: 1,
+        phase: "setup",
+        endReason: "",
+        resolvedUnits: 0,
+        combatLog: [],
+        lastAction: actionText,
+        p1: {
+          hp: INITIAL_HP,
+          maxHp: INITIAL_HP,
+          trait: "無",
+          setupReady: false,
+          status: createEmptyStatus(),
+          deck: [],
+          hand: [],
+          drawnHand: [],
+          slots: [false, false, false, false, false],
+          discard: [],
+          drawn: false,
+          confirmed: false,
+          nextReady: false,
+          restartReady: false
+        },
+        p2: {
+          hp: INITIAL_HP,
+          maxHp: INITIAL_HP,
+          trait: "無",
+          setupReady: false,
+          status: createEmptyStatus(),
+          deck: [],
+          hand: [],
+          drawnHand: [],
+          slots: [false, false, false, false, false],
+          discard: [],
+          drawn: false,
+          confirmed: false,
+          nextReady: false,
+          restartReady: false
+        }
+      };
+    }
+
+    function toArr(val) {
+      if (!val) return [];
+      return Array.isArray(val) ? val : Object.values(val);
+    }
+
+    function toSlots(val) {
+      const result = [null, null, null, null, null];
+      if (!val) return result;
+      for (let i = 0; i < 5; i++) {
+        result[i] = val[i] && val[i] !== false ? val[i] : null;
+      }
+      return result;
+    }
+
+    function normalizeSlotPhases(arr) {
+      const res = ["", "", "", "", ""];
+      if (!arr) return res;
+      for (let i = 0; i < 5; i++) {
+        res[i] = arr[i] || "";
+      }
+      return res;
+    }
+
+    function normalizeStatus(st) {
+      return {
+        enchant: st?.enchant || "",
+        sharpStacks: st?.sharpStacks || 0,
+        armorBreak: !!st?.armorBreak,
+        root: !!st?.root,
+        skyState: st?.skyState || "",
+        moonPhase: st?.moonPhase || "",
+        slotMoonPhases: normalizeSlotPhases(st?.slotMoonPhases),
+        moonStacks: st?.moonStacks || 0,
+        dodgeBonus: st?.dodgeBonus || 0,
+        moonEnhanced: !!st?.moonEnhanced
+      };
+    }
+
+    // 每輪次開始時，各自獨立為【月華一】玩家判定 80% 夜幕 / 20% 白晝，並預先抽出 5 個位置的月相
+    function rollRoundStartTraits(data) {
+      const logs = toArr(data.combatLog);
+      const applyForPlayer = (player, name) => {
+        player.status = normalizeStatus(player.status);
+        player.status.dodgeBonus = 0;
+        player.status.moonEnhanced = false;
+        player.status.moonPhase = "";
+        if (player.trait === "月華一") {
+          const isNight = Math.random() < 0.8;
+          player.status.skyState = isNight ? "夜幕" : "白晝";
+          if (isNight) {
+            const phases = [0, 1, 2, 3, 4].map(() => rollSingleMoonPhase());
+            player.status.slotMoonPhases = phases;
+            logs.push({
+              type: "info",
+              text: `[輪次開始｜月華一] ${name} 獨立判定 →【夜幕】（位置 1~5 月相：${phases.join(" / ")}；目前【月】：${player.status.moonStacks} 層）。`
             });
           } else {
             player.status.slotMoonPhases = ["白晝", "白晝", "白晝", "白晝", "白晝"];
@@ -782,7 +909,8 @@
       const logs = toArr(data.combatLog);
       const unitNo = unitIdx + 1;
 
-      const c1Label = c1 ? (c1.name === "屬性盾" ? `屬性盾(${c1.shieldElement \vert{}\vert{} "火"})` : c1.name) : "無"; const c2Label = c2 ? (c2.name === "屬性盾" ? `屬性盾(${c2.shieldElement || "火"})` : c2.name) : "無";
+      const c1Label = c1 ? (c1.name === "屬性盾" ? `屬性盾(${c1.shieldElement || "火"})` : c1.name) : "無";
+      const c2Label = c2 ? (c2.name === "屬性盾" ? `屬性盾(${c2.shieldElement || "火"})` : c2.name) : "無";
       logs.push({ type: "header", text: `【第 ${data.round} 回合 - 單位 ${unitNo}】P1 出牌「${c1Label}」 VS P2 出牌「${c2Label}」` });
 
       const p1Debuff = { armorBreak: p1.status.armorBreak, root: p1.status.root };
@@ -800,7 +928,7 @@
           const ms = getMoonPhaseStats(player.status);
           logs.push({
             type: "info",
-            text: `[1.特性被動] ${name}【月華一】位置 ${unitNo} 為【夜幕．${phase}】（基礎傷害+${Math.round(ms.dmgBonusRate * 100)}%、暗傷抗閃避+${Math.round(ms.antiDodge * 100)}\%${ms.ignoreDarkShield ? "、滿月無視暗屬性盾" : ""}）。`
+            text: `[1.特性被動] ${name}【月華一】位置 ${unitNo} 為【夜幕．${phase}】（基礎傷害+${Math.round(ms.dmgBonusRate * 100)}%、暗傷抗閃避+${Math.round(ms.antiDodge * 100)}%${ms.ignoreDarkShield ? "、滿月無視暗屬性盾" : ""}）。`
           });
         } else {
           player.status.moonPhase = "";
@@ -835,7 +963,13 @@
           if (status.sharpStacks > 0) {
             const bonus = status.sharpStacks * 2;
             dmg = round2(dmg + bonus);
-            notes.push(`鋒利+${bonus}`); } let element = "物理"; if (status.enchant) { element = status.enchant; dmg = round2(dmg * 1.1); notes.push(`${element}附魔×1.1`);
+            notes.push(`鋒利+${bonus}`);
+          }
+          let element = "物理";
+          if (status.enchant) {
+            element = status.enchant;
+            dmg = round2(dmg * 1.1);
+            notes.push(`${element}附魔×1.1`);
           }
           logs.push({ type: "info", text: `[2.附魔與增傷] ${playerName} 發動「基礎劍招」（${notes.join("、")}）→ 【${element}屬性 ${dmg} 傷害】` });
           return {
@@ -852,7 +986,28 @@
 
         if (card.name === "蝕月禁典") {
           if (status.skyState !== "夜幕") {
-            logs.push({ type: "info", text: `[2.特性攻擊] ${playerName} 試圖施放「蝕月禁典」，但目前為【白晝】狀態，無法施放！` }); return null; } const consumed = status.moonStacks \vert{}\vert{} 0; status.moonStacks = 0;  let baseDmg = 3; const notes = [`暗基礎3`]; if (ms.dmgBonusRate > 0) { baseDmg = round2(baseDmg * (1 + ms.dmgBonusRate)); notes.push(`夜幕.${status.moonPhase}+${Math.round(ms.dmgBonusRate * 100)}\%`); }  let layerBonus = 0; let extraAntiDodge = ms.antiDodge; let undodgeable = false; let reduceMaxHpRatio = 0;  if (status.moonPhase === "新月") { layerBonus = consumed * 1; extraAntiDodge = round2(extraAntiDodge + consumed * 0.01); notes.push(`新月消耗${consumed}層月(+${layerBonus}傷、抗閃避+${consumed}%)`);
+            logs.push({ type: "info", text: `[2.特性攻擊] ${playerName} 試圖施放「蝕月禁典」，但目前為【白晝】狀態，無法施放！` });
+            return null;
+          }
+          const consumed = status.moonStacks || 0;
+          status.moonStacks = 0;
+
+          let baseDmg = 3;
+          const notes = [`暗基礎3`];
+          if (ms.dmgBonusRate > 0) {
+            baseDmg = round2(baseDmg * (1 + ms.dmgBonusRate));
+            notes.push(`夜幕.${status.moonPhase}+${Math.round(ms.dmgBonusRate * 100)}%`);
+          }
+
+          let layerBonus = 0;
+          let extraAntiDodge = ms.antiDodge;
+          let undodgeable = false;
+          let reduceMaxHpRatio = 0;
+
+          if (status.moonPhase === "新月") {
+            layerBonus = consumed * 1;
+            extraAntiDodge = round2(extraAntiDodge + consumed * 0.01);
+            notes.push(`新月消耗${consumed}層月(+${layerBonus}傷、抗閃避+${consumed}%)`);
           } else if (status.moonPhase === "弦月") {
             layerBonus = consumed * 3;
             reduceMaxHpRatio = 0.1;
@@ -860,11 +1015,23 @@
           } else if (status.moonPhase === "滿月") {
             layerBonus = consumed * 4;
             if (consumed > 30) undodgeable = true;
-            notes.push(`滿月消耗${consumed}層月(+${layerBonus}傷${undodgeable ? "、超過30層無法閃避" : ""})`); }  let dmg = round2(baseDmg + layerBonus); if (status.sharpStacks > 0) { const bonus = status.sharpStacks * 2; dmg = round2(dmg + bonus); notes.push(`鋒利+${bonus}`);
+            notes.push(`滿月消耗${consumed}層月(+${layerBonus}傷${undodgeable ? "、超過30層無法閃避" : ""})`);
+          }
+
+          let dmg = round2(baseDmg + layerBonus);
+          if (status.sharpStacks > 0) {
+            const bonus = status.sharpStacks * 2;
+            dmg = round2(dmg + bonus);
+            notes.push(`鋒利+${bonus}`);
           }
           if (status.enchant) {
             dmg = round2(dmg * 1.1);
-            notes.push(`${status.enchant}附魔增傷×1.1(維持暗屬性)`); }  logs.push({ type: "info", text: `[2.附魔與增傷] ${playerName} 發動「蝕月禁典」（${notes.join("、")}）→ 【暗屬性 ${dmg} 傷害】`
+            notes.push(`${status.enchant}附魔增傷×1.1(維持暗屬性)`);
+          }
+
+          logs.push({
+            type: "info",
+            text: `[2.附魔與增傷] ${playerName} 發動「蝕月禁典」（${notes.join("、")}）→ 【暗屬性 ${dmg} 傷害】`
           });
 
           return {
@@ -899,12 +1066,18 @@
 
         if (defCard && defCard.name === "閃避") {
           if (defDebuff.root) {
-            logs.push({ type: "info", text: `[4.防禦類] ${defName} 的「閃避」因【禁錮】100\% 無效！承受 ${dmgToDef} 點傷害。` });
+            logs.push({ type: "info", text: `[4.防禦類] ${defName} 的「閃避」因【禁錮】100% 無效！承受 ${dmgToDef} 點傷害。` });
           } else if (atkInfo.undodgeable) {
-            logs.push({ type: "info", text: `[4.防禦類] ${atkName} 的「蝕月禁典」於滿月消耗超過 30 層【月】，無法被閃避！${defName} 承受 ${dmgToDef} 點傷害。` }); } else { const baseDodge = 0.5 + (defPlayer.status.dodgeBonus \vert{}\vert{} 0); const finalDodgeChance = Math.max(0, Math.min(1, round2(baseDodge - (atkInfo.antiDodge \vert{}\vert{} 0)))); const pctText = `${Math.round(finalDodgeChance * 100)}%`;
+            logs.push({ type: "info", text: `[4.防禦類] ${atkName} 的「蝕月禁典」於滿月消耗超過 30 層【月】，無法被閃避！${defName} 承受 ${dmgToDef} 點傷害。` });
+          } else {
+            const baseDodge = 0.5 + (defPlayer.status.dodgeBonus || 0);
+            const finalDodgeChance = Math.max(0, Math.min(1, round2(baseDodge - (atkInfo.antiDodge || 0))));
+            const pctText = `${Math.round(finalDodgeChance * 100)}%`;
             if (Math.random() < finalDodgeChance) {
               dmgToDef = round2(atkInfo.dmg * 0.2);
-              logs.push({ type: "info", text: `[4.防禦類] ${defName}「閃避」成功（判定率 ${pctText}）！抵擋 80% 傷害，僅受 ${dmgToDef} 點傷害。` }); } else { logs.push({ type: "info", text: `[4.防禦類] ${defName}「閃避」失敗（判定率 ${pctText}）！未能減傷，承受 ${dmgToDef} 點傷害。` });
+              logs.push({ type: "info", text: `[4.防禦類] ${defName}「閃避」成功（判定率 ${pctText}）！抵擋 80% 傷害，僅受 ${dmgToDef} 點傷害。` });
+            } else {
+              logs.push({ type: "info", text: `[4.防禦類] ${defName}「閃避」失敗（判定率 ${pctText}）！未能減傷，承受 ${dmgToDef} 點傷害。` });
             }
           }
         } else if (defCard && defCard.name === "物理防禦") {
@@ -912,11 +1085,20 @@
             logs.push({ type: "info", text: `[4.防禦類] ${defName} 的「物理防禦」因【破甲】無效化！承受 ${dmgToDef} 點傷害。` });
           } else if (atkInfo.element === "物理") {
             dmgToDef = round2(atkInfo.dmg * 0.2);
-            logs.push({ type: "info", text: `[4.防禦類] ${defName}「物理防禦」生效！抵擋 80\% 物理傷害，僅受 ${dmgToDef} 點傷害。` });
+            logs.push({ type: "info", text: `[4.防禦類] ${defName}「物理防禦」生效！抵擋 80% 物理傷害，僅受 ${dmgToDef} 點傷害。` });
           } else {
-            logs.push({ type: "info", text: `[4.防禦類] ${defName}「物理防禦」無法擋下【${atkInfo.element}屬性】攻擊，承受 ${dmgToDef} 點傷害。` }); } } else if (defCard && defCard.name === "屬性盾") { const chosen = defCard.shieldElement \vert{}\vert{} "火"; if (defDebuff.armorBreak) { logs.push({ type: "info", text: `[4.防禦類] ${defName} 的「屬性盾(${chosen})」因【破甲】無效化！承受 ${dmgToDef} 點傷害。` });
+            logs.push({ type: "info", text: `[4.防禦類] ${defName}「物理防禦」無法擋下【${atkInfo.element}屬性】攻擊，承受 ${dmgToDef} 點傷害。` });
+          }
+        } else if (defCard && defCard.name === "屬性盾") {
+          const chosen = defCard.shieldElement || "火";
+          if (defDebuff.armorBreak) {
+            logs.push({ type: "info", text: `[4.防禦類] ${defName} 的「屬性盾(${chosen})」因【破甲】無效化！承受 ${dmgToDef} 點傷害。` });
           } else if (atkInfo.element === "暗" && chosen === "暗" && atkInfo.ignoreDarkShield) {
-            logs.push({ type: "info", text: `[4.防禦類] ${atkName} 處於【夜幕．滿月】，暗屬性傷害無視「屬性盾(暗)」防禦！${defName} 承受 ${dmgToDef} 點傷害。` }); } else if (atkInfo.element === chosen) { dmgToDef = 0; reflectToAtk = round2(atkInfo.dmg * 0.1); logs.push({ type: "info", text: `[4.防禦類] ${defName}「屬性盾(${chosen})」猜中【${atkInfo.element}】！100% 抵銷傷害並反擊 10%（${reflectToAtk} 傷害）給 ${atkName}！` });
+            logs.push({ type: "info", text: `[4.防禦類] ${atkName} 處於【夜幕．滿月】，暗屬性傷害無視「屬性盾(暗)」防禦！${defName} 承受 ${dmgToDef} 點傷害。` });
+          } else if (atkInfo.element === chosen) {
+            dmgToDef = 0;
+            reflectToAtk = round2(atkInfo.dmg * 0.1);
+            logs.push({ type: "info", text: `[4.防禦類] ${defName}「屬性盾(${chosen})」猜中【${atkInfo.element}】！100% 抵銷傷害並反擊 10%（${reflectToAtk} 傷害）給 ${atkName}！` });
           } else {
             logs.push({ type: "info", text: `[4.防禦類] ${defName}「屬性盾(${chosen})」猜錯（對方為【${atkInfo.element}】），無效，承受 ${dmgToDef} 點傷害。` });
           }
@@ -967,7 +1149,7 @@
           const before = selfPlayer.hp;
           selfPlayer.hp = round2(Math.min(selfPlayer.maxHp, selfPlayer.hp + heal));
           const reason = oppAttacked ? "對方同位置攻擊，效果減半 +1" : "回復 +2";
-          logs.push({ type: "info", text: `[5.效果類] ${selfName} 發動「回復」（${reason}），HP ${before} →${selfPlayer.hp}` });
+          logs.push({ type: "info", text: `[5.效果類] ${selfName} 發動「回復」（${reason}），HP ${before} → ${selfPlayer.hp}` });
         } else if (card.name === "破甲") {
           oppPlayer.status.armorBreak = true;
           logs.push({ type: "info", text: `[5.效果類] ${selfName} 發動「破甲」，賦予 ${oppName}【破甲】（下張牌物理防禦、屬性盾無效）。` });
@@ -989,7 +1171,8 @@
                 selfPlayer.status.slotMoonPhases[k] = ph;
                 remPhases.push(`位置${k + 1}:${ph}`);
               }
-              const remText = remPhases.length ? `，剩餘月相：${remPhases.join(" / ")}` : ""; logs.push({ type: "info", text: `[5.特性效果] ${selfName} 於白晝發動「夜幕降臨」，消耗 3 層【月】轉化為【夜幕】狀態，本輪閃避率 +30%（剩餘【月】：${selfPlayer.status.moonStacks}${remText}）。` });
+              const remText = remPhases.length ? `，剩餘月相：${remPhases.join(" / ")}` : "";
+              logs.push({ type: "info", text: `[5.特性效果] ${selfName} 於白晝發動「夜幕降臨」，消耗 3 層【月】轉化為【夜幕】狀態，本輪閃避率 +30%（剩餘【月】：${selfPlayer.status.moonStacks}${remText}）。` });
             } else {
               logs.push({ type: "info", text: `[5.特性效果] ${selfName} 於白晝發動「夜幕降臨」，但【月】不足 3 層（目前 ${selfPlayer.status.moonStacks}），施放失敗。` });
             }
@@ -997,4 +1180,965 @@
             if (selfPlayer.status.moonStacks >= 1) {
               selfPlayer.status.moonStacks -= 1;
               selfPlayer.status.dodgeBonus = round2((selfPlayer.status.dodgeBonus || 0) + 0.3);
-              logs.push({ type: "info", text: `[5.特性效果] ${selfName} 於夜幕發動「夜幕降臨」，消耗 1 層【月】，本輪閃避率 +30\%（剩餘【月】：${selfPlayer.
+              logs.push({ type: "info", text: `[5.特性效果] ${selfName} 於夜幕發動「夜幕降臨」，消耗 1 層【月】，本輪閃避率 +30%（剩餘【月】：${selfPlayer.status.moonStacks}）。` });
+            } else {
+              logs.push({ type: "info", text: `[5.特性效果] ${selfName} 於夜幕發動「夜幕降臨」，但【月】不足 1 層，施放失敗。` });
+            }
+          } else {
+            logs.push({ type: "info", text: `[5.特性效果] ${selfName} 未持有【月華一】狀態，「夜幕降臨」無效。` });
+          }
+        } else if (card.name === "月相強化") {
+          if (selfPlayer.status.skyState !== "夜幕") {
+            logs.push({ type: "info", text: `[5.特性效果] ${selfName} 試圖發動「月相強化」，但目前為【白晝】狀態，無法施放。` });
+          } else if (selfPlayer.status.moonStacks >= 3) {
+            selfPlayer.status.moonStacks -= 3;
+            selfPlayer.status.moonEnhanced = true;
+            logs.push({ type: "info", text: `[5.特性效果] ${selfName} 發動「月相強化」，消耗 3 層【月】，本輪月相基礎攻擊增傷提升為 20%/40%/120%（剩餘【月】：${selfPlayer.status.moonStacks}）。` });
+          } else {
+            logs.push({ type: "info", text: `[5.特性效果] ${selfName} 發動「月相強化」，但【月】不足 3 層（目前 ${selfPlayer.status.moonStacks}），施放失敗。` });
+          }
+        }
+      };
+
+      applyEffectNonCleanse("P1", "P2", c1, p1, p2, !!atk2);
+      applyEffectNonCleanse("P2", "P1", c2, p2, p1, !!atk1);
+
+      if (c1 && c1.name === "淨化") {
+        p1.status.armorBreak = false;
+        p1.status.root = false;
+        logs.push({ type: "info", text: `[5.效果類] P1 發動「淨化」，清除身上所有負面效果！` });
+      }
+      if (c2 && c2.name === "淨化") {
+        p2.status.armorBreak = false;
+        p2.status.root = false;
+        logs.push({ type: "info", text: `[5.效果類] P2 發動「淨化」，清除身上所有負面效果！` });
+      }
+
+      const applyEnchant = (selfName, card, selfPlayer) => {
+        if (!card) return;
+        const map = { "火附魔": "火", "水附魔": "水", "雷附魔": "雷" };
+        const elem = map[card.name];
+        if (elem) {
+          selfPlayer.status.enchant = elem;
+          logs.push({ type: "info", text: `[6.屬性附魔] ${selfName} 施放「${card.name}」，下次攻擊變更為【${elem}屬性】並增傷 10%（可跨回合）。` });
+        }
+      };
+      applyEnchant("P1", c1, p1);
+      applyEnchant("P2", c2, p2);
+
+      const applyEndCharge = (player, name) => {
+        if (player.trait !== "月華一") return;
+        const ms = getMoonPhaseStats(player.status);
+        if (player.status.skyState === "夜幕" && player.status.moonPhase && player.status.moonPhase !== "白晝") {
+          player.status.moonStacks = (player.status.moonStacks || 0) + ms.chargeGain;
+          logs.push({
+            type: "info",
+            text: `[行動結束｜蓄能] ${name} 處於【夜幕．${player.status.moonPhase}】，自動蓄能 +${ms.chargeGain} 層【月】（目前【月】：${player.status.moonStacks} 層）。`
+          });
+        }
+      };
+      applyEndCharge(p1, "P1");
+      applyEndCharge(p2, "P2");
+
+      p1.hp = Math.max(0, Math.min(p1.maxHp, round2(p1.hp)));
+      p2.hp = Math.max(0, Math.min(p2.maxHp, round2(p2.hp)));
+      logs.push({ type: "hp", text: `→ 單位 ${unitNo} 結算完成：P1 血量 = ${p1.hp}/${p1.maxHp} ｜ P2 血量 = ${p2.hp}/${p2.maxHp}` });
+
+      data.resolvedUnits = unitNo;
+      data.combatLog = logs;
+      data.lastAction = `已完成第 ${data.round} 回合「單位 ${unitNo}」結算（P1 HP: ${p1.hp}/${p1.maxHp} / P2 HP: ${p2.hp}/${p2.maxHp}）`;
+
+      if (p1.hp <= 0 || p2.hp <= 0) {
+        data.phase = "ended";
+        if (p1.hp <= 0 && p2.hp <= 0) {
+          data.endReason = `雙方血量同時歸零，平手！`;
+        } else if (p1.hp <= 0) {
+          data.endReason = `玩家 1 (P1) 血量歸零，玩家 2 (P2) 獲勝！`;
+        } else {
+          data.endReason = `玩家 2 (P2) 血量歸零，玩家 1 (P1) 獲勝！`;
+        }
+        logs.push({ type: "header", text: `【遊戲結束】${data.endReason}` });
+        data.lastAction = `遊戲結束！${data.endReason}`;
+      }
+
+      return data;
+    }
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getDatabase(app);
+    const matchRef = ref(db, "cardgame_match");
+
+    // DOM 元素
+    const loginBox = document.getElementById("loginBox");
+    const gameBox = document.getElementById("gameBox");
+    const errorMsg = document.getElementById("errorMsg");
+    const userInfo = document.getElementById("userInfo");
+    const lastActionEl = document.getElementById("lastAction");
+    const roundNumEl = document.getElementById("roundNum");
+
+    const oppRoleNameEl = document.getElementById("oppRoleName");
+    const oppHpEl = document.getElementById("oppHp");
+    const oppMaxHpEl = document.getElementById("oppMaxHp");
+    const oppTraitNameEl = document.getElementById("oppTraitName");
+    const oppDeckCountEl = document.getElementById("oppDeckCount");
+    const oppDiscardCountEl = document.getElementById("oppDiscardCount");
+    const oppStatusTextEl = document.getElementById("oppStatusText");
+    const oppBuffRowEl = document.getElementById("oppBuffRow");
+    const oppMoonStripEl = document.getElementById("oppMoonStrip");
+
+    const myRoleNameEl = document.getElementById("myRoleName");
+    const myHpEl = document.getElementById("myHp");
+    const myMaxHpEl = document.getElementById("myMaxHp");
+    const myTraitNameEl = document.getElementById("myTraitName");
+    const myDeckCountEl = document.getElementById("myDeckCount");
+    const myDiscardCountEl = document.getElementById("myDiscardCount");
+    const myStatusTextEl = document.getElementById("myStatusText");
+    const myBuffRowEl = document.getElementById("myBuffRow");
+    const myMoonStripEl = document.getElementById("myMoonStrip");
+
+    const setupPhasePanel = document.getElementById("setupPhasePanel");
+    const traitOptNone = document.getElementById("traitOptNone");
+    const traitOptMoon = document.getElementById("traitOptMoon");
+    const builderTotalCount = document.getElementById("builderTotalCount");
+    const builderCountHint = document.getElementById("builderCountHint");
+    const fillDefaultDeckBtn = document.getElementById("fillDefaultDeckBtn");
+    const clearDeckBtn = document.getElementById("clearDeckBtn");
+    const confirmSetupBtn = document.getElementById("confirmSetupBtn");
+    const setupWaitMsg = document.getElementById("setupWaitMsg");
+    const baseCardBuilderGrid = document.getElementById("baseCardBuilderGrid");
+    const traitCardSection = document.getElementById("traitCardSection");
+    const traitCardBuilderGrid = document.getElementById("traitCardBuilderGrid");
+
+    const playPhasePanel = document.getElementById("playPhasePanel");
+    const drawDeckBtn = document.getElementById("drawDeckBtn");
+    const deckBtnCount = document.getElementById("deckBtnCount");
+    const deckBtnSub = document.getElementById("deckBtnSub");
+    const drawHint = document.getElementById("drawHint");
+    const oppDrawnHandGrid = document.getElementById("oppDrawnHandGrid");
+    const mySlotsGrid = document.getElementById("mySlotsGrid");
+    const myHandGrid = document.getElementById("myHandGrid");
+    const confirmPlayBtn = document.getElementById("confirmPlayBtn");
+    const playWaitMsg = document.getElementById("playWaitMsg");
+
+    const revealPhasePanel = document.getElementById("revealPhasePanel");
+    const revealRoundNum = document.getElementById("revealRoundNum");
+    const resolveProgressText = document.getElementById("resolveProgressText");
+    const oppRevealGrid = document.getElementById("oppRevealGrid");
+    const myRevealGrid = document.getElementById("myRevealGrid");
+    const resolveUnitBtn = document.getElementById("resolveUnitBtn");
+    const confirmNextBtn = document.getElementById("confirmNextBtn");
+    const nextWaitMsg = document.getElementById("nextWaitMsg");
+    const combatLogContent = document.getElementById("combatLogContent");
+
+    const endPhasePanel = document.getElementById("endPhasePanel");
+    const endReasonText = document.getElementById("endReasonText");
+    const totalRoundsEnd = document.getElementById("totalRoundsEnd");
+    const restartBtn = document.getElementById("restartBtn");
+    const restartWaitMsg = document.getElementById("restartWaitMsg");
+    const endCombatLogContent = document.getElementById("endCombatLogContent");
+
+    // 剩餘牌庫分類彈窗 DOM
+    const deckViewerModal = document.getElementById("deckViewerModal");
+    const deckModalTotal = document.getElementById("deckModalTotal");
+    const deckModalBody = document.getElementById("deckModalBody");
+    const closeDeckModalBtn = document.getElementById("closeDeckModalBtn");
+
+    let myRole = null;
+    let oppKey = null;
+    let matchData = null;
+    let unsubscribeMatch = null;
+    let localSlots = [null, null, null, null, null];
+    let lastRoundToken = "";
+    let lastMatchId = null;
+    let dragPayload = null;
+
+    let selectedTrait = "無";
+    let customCounts = {};
+
+    function resetLocalBuilderToDefault() {
+      customCounts = {};
+      BASE_CARD_TEMPLATES.forEach((c) => { customCounts[c.name] = c.count; });
+      TRAIT_CARDS_BY_TRAIT["月華一"].forEach((c) => { customCounts[c.name] = 0; });
+    }
+    resetLocalBuilderToDefault();
+
+    function getBuilderTotal() {
+      return Object.values(customCounts).reduce((sum, n) => sum + (n || 0), 0);
+    }
+
+    // 打開剩餘牌庫分類檢視彈窗（只顯示分類與每種牌剩餘張數，不顯示順序）
+    function openRemainingDeckModal() {
+      if (!matchData || !myRole) return;
+      const myDeck = toArr(matchData[myRole.key].deck);
+      deckModalTotal.textContent = myDeck.length;
+
+      if (myDeck.length === 0) {
+        deckModalBody.innerHTML = `<p style="color:#64748b;">目前牌庫已空（0 張），下次抽牌時會自動將棄牌區全部重新洗回牌庫。</p>`;
+        deckViewerModal.classList.remove("hidden");
+        return;
+      }
+
+      const countMap = {};
+      myDeck.forEach((c) => {
+        countMap[c.name] = (countMap[c.name] || 0) + 1;
+      });
+
+      const typeMap = {
+        atk: "card-atk",
+        def: "card-def",
+        heal: "card-heal",
+        util: "card-util",
+        moon: "card-moon"
+      };
+
+      const blocksHtml = DECK_VIEW_CATEGORIES.map((cat) => {
+        const items = cat.cards
+          .filter((name) => (countMap[name] || 0) > 0)
+          .map((name) => {
+            const tpl = ALL_CARD_MAP[name];
+            const cls = tpl ? (typeMap[tpl.type] || "") : "";
+            return `<div class="deck-count-pill ${cls}">${name}：<strong>${countMap[name]}</strong> 張</div>`;
+          });
+        if (items.length === 0) return "";
+        const catSum = cat.cards.reduce((s, name) => s + (countMap[name] || 0), 0);
+        return `
+          <div class="deck-cat-block">
+            <div class="deck-cat-title">${cat.title}（共 ${catSum} 張）</div>
+            <div class="deck-cat-list">${items.join("")}</div>
+          </div>
+        `;
+      }).filter(Boolean).join("");
+
+      deckModalBody.innerHTML = blocksHtml || `<p style="color:#64748b;">目前牌庫無剩餘卡牌。</p>`;
+      deckViewerModal.classList.remove("hidden");
+    }
+
+    closeDeckModalBtn.addEventListener("click", () => {
+      deckViewerModal.classList.add("hidden");
+    });
+    deckViewerModal.addEventListener("click", (e) => {
+      if (e.target === deckViewerModal) {
+        deckViewerModal.classList.add("hidden");
+      }
+    });
+
+    traitOptNone.addEventListener("click", () => {
+      if (matchData && myRole && matchData[myRole.key]?.setupReady) return;
+      selectedTrait = "無";
+      TRAIT_CARDS_BY_TRAIT["月華一"].forEach((c) => { customCounts[c.name] = 0; });
+      renderSetupPanel();
+    });
+
+    traitOptMoon.addEventListener("click", () => {
+      if (matchData && myRole && matchData[myRole.key]?.setupReady) return;
+      selectedTrait = "月華一";
+      renderSetupPanel();
+    });
+
+    fillDefaultDeckBtn.addEventListener("click", () => {
+      if (matchData && myRole && matchData[myRole.key]?.setupReady) return;
+      resetLocalBuilderToDefault();
+      renderSetupPanel();
+    });
+
+    clearDeckBtn.addEventListener("click", () => {
+      if (matchData && myRole && matchData[myRole.key]?.setupReady) return;
+      Object.keys(customCounts).forEach((k) => { customCounts[k] = 0; });
+      renderSetupPanel();
+    });
+
+    confirmSetupBtn.addEventListener("click", () => {
+      if (!myRole) return;
+      if (getBuilderTotal() !== REQUIRED_DECK_SIZE) return;
+      const myDeck = buildShuffledDeckFromCounts(customCounts);
+      const chosenTrait = selectedTrait;
+
+      runTransaction(matchRef, (data) => {
+        if (!data || !data.p1 || !data.p2) return data;
+        if (data.phase !== "setup") return data;
+        data[myRole.key].trait = chosenTrait;
+        data[myRole.key].deck = myDeck;
+        data[myRole.key].setupReady = true;
+        data.lastAction = `${myRole.name} 已完成特性與 60 張牌庫設定`;
+
+        if (data.p1.setupReady && data.p2.setupReady) {
+          data.phase = "playing";
+          data.round = 1;
+          rollRoundStartTraits(data);
+          data.lastAction = `雙方皆已完成牌庫設定！第 1 回合正式開始`;
+        }
+        return data;
+      });
+    });
+
+    myHandGrid.addEventListener("dragover", (e) => {
+      if (dragPayload && dragPayload.source === "slot") {
+        e.preventDefault();
+        myHandGrid.classList.add("drag-over");
+      }
+    });
+    myHandGrid.addEventListener("dragleave", () => {
+      myHandGrid.classList.remove("drag-over");
+    });
+    myHandGrid.addEventListener("drop", (e) => {
+      e.preventDefault();
+      myHandGrid.classList.remove("drag-over");
+      if (dragPayload && dragPayload.source === "slot") {
+        localSlots[dragPayload.fromIdx] = null;
+        dragPayload = null;
+        renderGame();
+      }
+    });
+
+    document.getElementById("loginBtn").addEventListener("click", async () => {
+      errorMsg.textContent = "";
+      const email = document.getElementById("emailInput").value.trim().toLowerCase();
+      const password = document.getElementById("passwordInput").value;
+      try {
+        await signInWithEmailAndPassword(auth, email, password);
+      } catch (err) {
+        errorMsg.textContent = "登入失敗，請確認帳號密碼是否正確。";
+      }
+    });
+
+    document.getElementById("logoutBtn").addEventListener("click", () => signOut(auth));
+
+    document.getElementById("forceResetBtn").addEventListener("click", () => {
+      if (!myRole) return;
+      if (confirm("確定要強制重置整局並重新選擇特性與牌庫嗎？")) {
+        set(matchRef, createInitialMatch(`${myRole.name} 強制重置了對局，請重新選擇特性與牌庫`));
+      }
+    });
+
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        const emailLower = (user.email || "").toLowerCase();
+        myRole = PLAYER_ROLES[emailLower];
+        if (!myRole) {
+          errorMsg.textContent = `帳號 ${user.email} 不在 PLAYER_ROLES 名單中，請檢查程式碼設定。`;
+          signOut(auth);
+          return;
+        }
+        oppKey = myRole.key === "p1" ? "p2" : "p1";
+        userInfo.textContent = `${myRole.name} (${user.email})`;
+        myRoleNameEl.textContent = myRole.name;
+        oppRoleNameEl.textContent = oppKey === "p1" ? "玩家 1 (P1)" : "玩家 2 (P2)";
+
+        loginBox.classList.add("hidden");
+        gameBox.classList.remove("hidden");
+
+        unsubscribeMatch = onValue(matchRef, (snapshot) => {
+          const data = snapshot.val();
+          if (!data || !data.p1 || !data.p2) {
+            set(matchRef, createInitialMatch("系統自動建立新對局，請雙方選擇特性並組建 60 張牌庫"));
+            return;
+          }
+          matchData = data;
+          if (data.matchId !== lastMatchId) {
+            lastMatchId = data.matchId;
+            selectedTrait = "無";
+            resetLocalBuilderToDefault();
+          }
+          const token = `${data.matchId}_${data.round}`;
+          if (token !== lastRoundToken) {
+            localSlots = [null, null, null, null, null];
+            lastRoundToken = token;
+          }
+          renderGame();
+        });
+      } else {
+        if (unsubscribeMatch) unsubscribeMatch();
+        matchData = null;
+        myRole = null;
+        loginBox.classList.remove("hidden");
+        gameBox.classList.add("hidden");
+      }
+    });
+
+    // 動作一：未抽牌時點擊抽 10 張；已抽牌後點擊則開啟分類剩餘牌庫檢視
+    drawDeckBtn.addEventListener("click", () => {
+      if (!matchData || !myRole) return;
+      const myState = matchData[myRole.key];
+
+      if (myState.drawn) {
+        openRemainingDeckModal();
+        return;
+      }
+
+      let deck = toArr(myState.deck);
+      let discard = toArr(myState.discard);
+      if (deck.length === 0 && discard.length === 0) return;
+
+      let drawnCards = [];
+      let remainDeck = [];
+      let newDiscard = discard;
+      let reshuffledCount = 0;
+
+      if (deck.length >= 10) {
+        drawnCards = deck.slice(0, 10);
+        remainDeck = deck.slice(10);
+      } else {
+        const firstPart = [...deck];
+        reshuffledCount = discard.length;
+        const reshuffled = shuffleArray(discard);
+        newDiscard = [];
+        const need = Math.min(10 - firstPart.length, reshuffled.length);
+        drawnCards = [...firstPart, ...reshuffled.slice(0, need)];
+        remainDeck = reshuffled.slice(need);
+      }
+
+      const actionText = reshuffledCount > 0
+        ? `${myRole.name} 牌庫不足，已將棄牌區 ${reshuffledCount} 張重新打亂洗回牌庫，並抽出 ${drawnCards.length} 張牌`
+        : `${myRole.name} 從牌庫抽出了 ${drawnCards.length} 張牌`;
+
+      localSlots = [null, null, null, null, null];
+      update(matchRef, {
+        [`${myRole.key}/deck`]: remainDeck,
+        [`${myRole.key}/discard`]: newDiscard,
+        [`${myRole.key}/hand`]: drawnCards,
+        [`${myRole.key}/drawnHand`]: drawnCards,
+        [`${myRole.key}/drawn`]: true,
+        lastAction: actionText
+      });
+    });
+
+    // 動作三 + 動作四：放滿 5 張後按確認，剩餘手牌自動放入棄牌堆（保留 drawnHand 供雙方檢視抽牌內容）
+    confirmPlayBtn.addEventListener("click", () => {
+      if (!matchData || !myRole) return;
+      const myState = matchData[myRole.key];
+      if (myState.confirmed) return;
+      if (localSlots.some((c) => !c)) return;
+
+      const selectedIds = new Set(localSlots.map((c) => c.id));
+      const fullHand = toArr(myState.hand);
+      const leftoverCards = fullHand.filter((c) => !selectedIds.has(c.id));
+      const newDiscard = [...toArr(myState.discard), ...leftoverCards];
+
+      update(matchRef, {
+        [`${myRole.key}/slots`]: localSlots,
+        [`${myRole.key}/hand`]: [],
+        [`${myRole.key}/discard`]: newDiscard,
+        [`${myRole.key}/confirmed`]: true,
+        lastAction: `${myRole.name} 已確認 5 張出牌並將剩餘 ${leftoverCards.length} 張手牌放入棄牌堆`
+      });
+    });
+
+    resolveUnitBtn.addEventListener("click", () => {
+      if (!myRole) return;
+      runTransaction(matchRef, (data) => {
+        if (!data || !data.p1 || !data.p2) return data;
+        if (data.phase === "ended") return data;
+        if (!data.p1.confirmed || !data.p2.confirmed) return data;
+        const done = data.resolvedUnits || 0;
+        if (done >= 5) return data;
+        return resolveOneUnit(data, done);
+      });
+    });
+
+    confirmNextBtn.addEventListener("click", () => {
+      if (!myRole) return;
+      runTransaction(matchRef, (data) => {
+        if (!data || !data.p1 || !data.p2) return data;
+        if ((data.resolvedUnits || 0) < 5) return data;
+        data[myRole.key].nextReady = true;
+        data.lastAction = `${myRole.name} 已確認本回合結算結果`;
+
+        if (data.p1.nextReady && data.p2.nextReady) {
+          const p1Played = toSlots(data.p1.slots).filter(Boolean);
+          const p2Played = toSlots(data.p2.slots).filter(Boolean);
+          data.p1.discard = [...toArr(data.p1.discard), ...p1Played];
+          data.p2.discard = [...toArr(data.p2.discard), ...p2Played];
+
+          data.p1.slots = [false, false, false, false, false];
+          data.p2.slots = [false, false, false, false, false];
+          data.p1.drawnHand = [];
+          data.p2.drawnHand = [];
+          data.p1.drawn = false;
+          data.p2.drawn = false;
+          data.p1.confirmed = false;
+          data.p2.confirmed = false;
+          data.p1.nextReady = false;
+          data.p2.nextReady = false;
+          data.resolvedUnits = 0;
+
+          data.round = (data.round || 1) + 1;
+          rollRoundStartTraits(data);
+          data.lastAction = `雙方已確認，進入第 ${data.round} 回合`;
+        }
+        return data;
+      });
+    });
+
+    restartBtn.addEventListener("click", () => {
+      if (!myRole) return;
+      runTransaction(matchRef, (data) => {
+        if (!data || !data.p1 || !data.p2) return data;
+        data[myRole.key].restartReady = true;
+        data.lastAction = `${myRole.name} 已按下重來一局`;
+
+        if (data.p1.restartReady && data.p2.restartReady) {
+          return createInitialMatch("雙方皆已按下重來，請重新選擇特性與自訂牌庫！");
+        }
+        return data;
+      });
+    });
+
+    function renderBuffTags(container, moonStripContainer, player, isSetup) {
+      const st = normalizeStatus(player.status);
+      const tags = [];
+
+      if (!isSetup && player.trait === "月華一" && st.skyState) {
+        if (st.skyState === "夜幕") {
+          const phaseStr = st.moonPhase ? `．${st.moonPhase}` : "";
+          tags.push(`<span class="tag tag-moon">黑夜（夜幕${phaseStr}）${st.moonEnhanced ? " (已強化)" : ""}</span>`);
+        } else {
+          tags.push(`<span class="tag tag-day">白晝</span>`);
+        }
+        tags.push(`<span class="tag tag-moon">【月】：${st.moonStacks} 層</span>`);
+        if (st.dodgeBonus > 0) {
+          tags.push(`<span class="tag tag-buff">閃避率 +${Math.round(st.dodgeBonus * 100)}%</span>`);
+        }
+      }
+
+      tags.push(
+        st.enchant
+          ? `<span class="tag tag-enchant">附魔：${st.enchant} (+10%)</span>`
+          : `<span class="tag">附魔：無</span>`
+      );
+      tags.push(
+        st.sharpStacks > 0
+          ? `<span class="tag tag-buff">增傷：鋒利 +${st.sharpStacks * 2}</span>`
+          : `<span class="tag">增傷：無</span>`
+      );
+      const debuffs = [];
+      if (st.armorBreak) debuffs.push("破甲");
+      if (st.root) debuffs.push("禁錮");
+      tags.push(
+        debuffs.length > 0
+          ? `<span class="tag tag-debuff">負面效果：${debuffs.join("、")}</span>`
+          : `<span class="tag">負面效果：無</span>`
+      );
+      container.innerHTML = tags.join("");
+
+      if (!isSetup && player.trait === "月華一" && st.skyState) {
+        const phases = normalizeSlotPhases(st.slotMoonPhases);
+        moonStripContainer.innerHTML = phases.map((ph, i) => {
+          const label = st.skyState === "白晝" ? "白晝" : (ph || "—");
+          const cls = label === "滿月" ? " full" : (label === "白晝" ? " day" : "");
+          return `<span class="moon-pill${cls}">位${i + 1}:${label}</span>`;
+        }).join("");
+      } else {
+        moonStripContainer.innerHTML = "";
+      }
+    }
+
+    function renderCombatLog(container, rawLog) {
+      const logs = toArr(rawLog);
+      if (logs.length === 0) {
+        container.innerHTML = "等待開始結算單位 1...";
+        return;
+      }
+      container.innerHTML = logs.map((item) => {
+        if (item.type === "header") return `<div class="log-unit-header">${item.text}</div>`;
+        if (item.type === "hp") return `<div class="log-hp">${item.text}</div>`;
+        return `<div>${item.text}</div>`;
+      }).join("");
+      container.parentElement.scrollTop = container.parentElement.scrollHeight;
+    }
+
+    function createCardContent(card, showShieldChoice = false) {
+      const typeMap = {
+        atk: "card-atk",
+        def: "card-def",
+        heal: "card-heal",
+        util: "card-util",
+        moon: "card-moon"
+      };
+      const typeClass = typeMap[card.type] || "card-util";
+      const valText = card.value !== "" && card.value !== undefined ? ` ${card.value}` : "";
+      const mainLine = `${card.effect || ""}${valText}`.trim();
+      const metaParts = [];
+      if (card.trigger) metaParts.push(card.trigger);
+      if (showShieldChoice && card.name === "屬性盾") {
+        metaParts.push(`阻擋：${card.shieldElement || "火"}`);
+      }
+      const metaHtml = metaParts.length > 0
+        ? `<div class="card-meta">${metaParts.join("｜")}</div>`
+        : "";
+
+      return {
+        typeClass,
+        html: `<div class="card-name">${card.name}</div><div class="card-desc">${mainLine}</div>${metaHtml}`
+      };
+    }
+
+    function getMoonBadgeHtml(player, idx) {
+      if (!player || player.trait !== "月華一") return "";
+      const st = normalizeStatus(player.status);
+      if (!st.skyState) return "";
+      const label = st.skyState === "白晝" ? "白晝" : (st.slotMoonPhases[idx] || "");
+      if (!label) return "";
+      const cls = label === "滿月" ? " full" : (label === "白晝" ? " day" : "");
+      return `<span class="slot-moon-badge${cls}">${label}</span>`;
+    }
+
+    function renderOppDrawnHand(oppState) {
+      oppDrawnHandGrid.innerHTML = "";
+      if (!oppState.drawn) {
+        oppDrawnHandGrid.innerHTML = `<span style="color:#64748b; font-size:13px;">對手尚未抽牌。</span>`;
+        return;
+      }
+      const cards = toArr(oppState.drawnHand).length > 0
+        ? toArr(oppState.drawnHand)
+        : toArr(oppState.hand);
+
+      if (cards.length === 0) {
+        oppDrawnHandGrid.innerHTML = `<span style="color:#64748b; font-size:13px;">對手已抽牌。</span>`;
+        return;
+      }
+
+      cards.forEach((card) => {
+        const info = createCardContent(card, false);
+        const div = document.createElement("div");
+        div.className = `opp-card-chip ${info.typeClass}`;
+        div.innerHTML = `<div class="card-name" style="font-size:13px;">${card.name}</div><div class="card-desc" style="font-size:11px;">${card.effect || ""}${card.value !== "" && card.value !== undefined ? " " + card.value : ""}</div>`;
+        oppDrawnHandGrid.appendChild(div);
+      });
+    }
+
+    function renderBuilderGrid(container, templates, locked) {
+      container.innerHTML = "";
+      templates.forEach((tpl) => {
+        const info = createCardContent(tpl, false);
+        const count = customCounts[tpl.name] || 0;
+        const div = document.createElement("div");
+        div.className = `builder-item ${info.typeClass}`;
+        div.innerHTML = `
+          <div>${info.html}</div>
+          <div class="builder-controls">
+            <button type="button" class="mini-btn secondary btn-minus" ${locked || count <= 0 ? "disabled" : ""}>-1</button>
+            <strong>${count} 張</strong>
+            <div style="display:flex; gap:4px;">
+              <button type="button" class="mini-btn btn-plus" ${locked ? "disabled" : ""}>+1</button>
+              <button type="button" class="mini-btn btn-plus5" ${locked ? "disabled" : ""}>+5</button>
+            </div>
+          </div>
+        `;
+        div.querySelector(".btn-minus").addEventListener("click", () => {
+          customCounts[tpl.name] = Math.max(0, (customCounts[tpl.name] || 0) - 1);
+          renderSetupPanel();
+        });
+        div.querySelector(".btn-plus").addEventListener("click", () => {
+          customCounts[tpl.name] = (customCounts[tpl.name] || 0) + 1;
+          renderSetupPanel();
+        });
+        div.querySelector(".btn-plus5").addEventListener("click", () => {
+          customCounts[tpl.name] = (customCounts[tpl.name] || 0) + 5;
+          renderSetupPanel();
+        });
+        container.appendChild(div);
+      });
+    }
+
+    function renderSetupPanel() {
+      const locked = !!(matchData && myRole && matchData[myRole.key]?.setupReady);
+      traitOptNone.classList.toggle("selected", selectedTrait === "無");
+      traitOptMoon.classList.toggle("selected", selectedTrait === "月華一");
+
+      const total = getBuilderTotal();
+      builderTotalCount.textContent = total;
+      if (total === REQUIRED_DECK_SIZE) {
+        builderCountHint.textContent = "已達 60 張，可以確認開戰！";
+        builderCountHint.style.color = "#15803d";
+      } else if (total < REQUIRED_DECK_SIZE) {
+        builderCountHint.textContent = `還差 ${REQUIRED_DECK_SIZE - total} 張`;
+        builderCountHint.style.color = "#b45309";
+      } else {
+        builderCountHint.textContent = `超出 ${total - REQUIRED_DECK_SIZE} 張`;
+        builderCountHint.style.color = "#dc2626";
+      }
+
+      fillDefaultDeckBtn.disabled = locked;
+      clearDeckBtn.disabled = locked;
+      confirmSetupBtn.disabled = locked || total !== REQUIRED_DECK_SIZE;
+      setupWaitMsg.classList.toggle("hidden", !locked);
+
+      renderBuilderGrid(baseCardBuilderGrid, BASE_CARD_TEMPLATES, locked);
+
+      if (selectedTrait === "月華一") {
+        traitCardSection.classList.remove("hidden");
+        renderBuilderGrid(traitCardBuilderGrid, TRAIT_CARDS_BY_TRAIT["月華一"], locked);
+      } else {
+        traitCardSection.classList.add("hidden");
+      }
+    }
+
+    function renderGame() {
+      if (!matchData || !myRole) return;
+      const myState = matchData[myRole.key];
+      const oppState = matchData[oppKey];
+
+      const myDeck = toArr(myState.deck);
+      const myDiscard = toArr(myState.discard);
+      const oppDeck = toArr(oppState.deck);
+      const oppDiscard = toArr(oppState.discard);
+      const resolvedUnits = matchData.resolvedUnits || 0;
+      const isSetup = matchData.phase === "setup";
+
+      lastActionEl.textContent = matchData.lastAction || "尚無紀錄";
+      roundNumEl.textContent = matchData.round || 1;
+
+      myHpEl.textContent = myState.hp ?? INITIAL_HP;
+      myMaxHpEl.textContent = myState.maxHp ?? INITIAL_HP;
+      oppHpEl.textContent = oppState.hp ?? INITIAL_HP;
+      oppMaxHpEl.textContent = oppState.maxHp ?? INITIAL_HP;
+
+      myTraitNameEl.textContent = isSetup ? selectedTrait : (myState.trait || "無");
+      oppTraitNameEl.textContent = isSetup ? (oppState.setupReady ? "已鎖定" : "設定中") : (oppState.trait || "無");
+
+      myDeckCountEl.textContent = myDeck.length;
+      myDiscardCountEl.textContent = myDiscard.length;
+      oppDeckCountEl.textContent = oppDeck.length;
+      oppDiscardCountEl.textContent = oppDiscard.length;
+
+      renderBuffTags(myBuffRowEl, myMoonStripEl, myState, isSetup);
+      renderBuffTags(oppBuffRowEl, oppMoonStripEl, oppState, isSetup);
+
+      if (isSetup) {
+        oppStatusTextEl.textContent = oppState.setupReady ? "已完成特性與牌庫設定" : "選擇特性與組牌中...";
+        myStatusTextEl.textContent = myState.setupReady ? "已完成設定，等待對手" : "請選擇特性並組滿 60 張牌庫";
+        setupPhasePanel.classList.remove("hidden");
+        playPhasePanel.classList.add("hidden");
+        revealPhasePanel.classList.add("hidden");
+        endPhasePanel.classList.add("hidden");
+        renderSetupPanel();
+        return;
+      }
+
+      setupPhasePanel.classList.add("hidden");
+
+      if (matchData.phase === "ended") {
+        oppStatusTextEl.textContent = oppState.restartReady ? "已按下重來" : "等待按下重來";
+        myStatusTextEl.textContent = myState.restartReady ? "已按下重來" : "請決定是否重來";
+      } else if (myState.confirmed && oppState.confirmed) {
+        if (resolvedUnits < 5) {
+          oppStatusTextEl.textContent = `結算進行中（已完成 ${resolvedUnits}/5 單位）`;
+          myStatusTextEl.textContent = `請點擊結算單位 ${resolvedUnits + 1}`;
+        } else {
+          oppStatusTextEl.textContent = oppState.nextReady ? "已確認進入下回合" : "檢視結算結果中";
+          myStatusTextEl.textContent = myState.nextReady ? "已確認進入下回合" : "本回合結算完畢，請按確認";
+        }
+      } else {
+        oppStatusTextEl.textContent = oppState.confirmed
+          ? "已放完 5 張牌並鎖定確認"
+          : (oppState.drawn ? "已抽牌，選擇出牌中..." : "尚未抽牌");
+        myStatusTextEl.textContent = myState.confirmed
+          ? "已確認出牌，等待對手"
+          : (myState.drawn ? "請拖曳 5 張牌放入指定空槽" : "請點擊牌庫抽 10 張牌");
+      }
+
+      if (matchData.phase === "ended") {
+        playPhasePanel.classList.add("hidden");
+        revealPhasePanel.classList.add("hidden");
+        endPhasePanel.classList.remove("hidden");
+
+        endReasonText.textContent = matchData.endReason || "遊戲結束！";
+        totalRoundsEnd.textContent = matchData.round || 1;
+        restartBtn.disabled = !!myState.restartReady;
+        restartWaitMsg.classList.toggle("hidden", !myState.restartReady);
+        renderCombatLog(endCombatLogContent, matchData.combatLog);
+        return;
+      }
+
+      const bothConfirmed = !!myState.confirmed && !!oppState.confirmed;
+      if (bothConfirmed) {
+        playPhasePanel.classList.add("hidden");
+        endPhasePanel.classList.add("hidden");
+        revealPhasePanel.classList.remove("hidden");
+
+        revealRoundNum.textContent = matchData.round || 1;
+        resolveProgressText.textContent = `${resolvedUnits} / 5`;
+        renderRevealRow(oppRevealGrid, toSlots(oppState.slots), resolvedUnits, oppState);
+        renderRevealRow(myRevealGrid, toSlots(myState.slots), resolvedUnits, myState);
+        renderCombatLog(combatLogContent, matchData.combatLog);
+
+        if (resolvedUnits < 5) {
+          resolveUnitBtn.classList.remove("hidden");
+          resolveUnitBtn.textContent = `結算單位 ${resolvedUnits + 1}`;
+          confirmNextBtn.classList.add("hidden");
+          nextWaitMsg.classList.add("hidden");
+        } else {
+          resolveUnitBtn.classList.add("hidden");
+          confirmNextBtn.classList.remove("hidden");
+          confirmNextBtn.disabled = !!myState.nextReady;
+          nextWaitMsg.classList.toggle("hidden", !myState.nextReady);
+        }
+        return;
+      }
+
+      revealPhasePanel.classList.add("hidden");
+      endPhasePanel.classList.add("hidden");
+      playPhasePanel.classList.remove("hidden");
+
+      deckBtnCount.textContent = myDeck.length === 0 && myDiscard.length > 0 && !myState.drawn
+        ? "剩 0 張(自動洗牌)"
+        : `剩 ${myDeck.length} 張`;
+      deckBtnSub.textContent = myState.drawn ? "點擊檢視剩餘牌庫" : "點擊抽 10 張";
+      drawDeckBtn.disabled = !myState.drawn && myDeck.length === 0 && myDiscard.length === 0;
+      drawHint.textContent = myState.drawn
+        ? "本回合已抽牌：可點擊左側牌庫依分類檢視剩餘牌組，並將下方手牌拖曳放入上方任意位置空槽。"
+        : "尚未抽牌，請點擊左側牌庫抽出本回合的 10 張手牌。";
+
+      renderOppDrawnHand(oppState);
+
+      const displaySlots = myState.confirmed ? toSlots(myState.slots) : localSlots;
+      renderMySlots(displaySlots, !!myState.confirmed, myState);
+      renderMyHand(toArr(myState.hand), !!myState.confirmed);
+
+      const allFiveFilled = displaySlots.every((c) => !!c);
+      confirmPlayBtn.disabled = !!myState.confirmed || !allFiveFilled;
+      playWaitMsg.classList.toggle("hidden", !myState.confirmed);
+    }
+
+    function renderMySlots(slots, locked, myState) {
+      mySlotsGrid.innerHTML = "";
+      slots.forEach((card, idx) => {
+        const div = document.createElement("div");
+        div.className = "slot";
+        const label = `<span class="slot-label">位置 ${idx + 1}</span>`;
+        const moonBadge = getMoonBadgeHtml(myState, idx);
+
+        if (!locked) {
+          div.addEventListener("dragover", (e) => {
+            e.preventDefault();
+            div.classList.add("drag-over");
+          });
+          div.addEventListener("dragleave", () => {
+            div.classList.remove("drag-over");
+          });
+          div.addEventListener("drop", (e) => {
+            e.preventDefault();
+            div.classList.remove("drag-over");
+            if (!dragPayload) return;
+
+            if (dragPayload.source === "hand") {
+              const cardObj = dragPayload.card;
+              const placedCard = cardObj.name === "屬性盾"
+                ? { ...cardObj, shieldElement: cardObj.shieldElement || "火" }
+                : cardObj;
+              localSlots[idx] = placedCard;
+            } else if (dragPayload.source === "slot") {
+              const fromIdx = dragPayload.fromIdx;
+              if (fromIdx !== idx) {
+                const temp = localSlots[idx];
+                localSlots[idx] = localSlots[fromIdx];
+                localSlots[fromIdx] = temp;
+              }
+            }
+            dragPayload = null;
+            renderGame();
+          });
+        }
+
+        if (card) {
+          const info = createCardContent(card, locked);
+          div.classList.add("filled", info.typeClass);
+          div.innerHTML = label + moonBadge + info.html;
+
+          if (!locked && card.name === "屬性盾") {
+            const picker = document.createElement("div");
+            picker.className = "shield-picker";
+            ["火", "水", "雷", "暗"].forEach((elem) => {
+              const btn = document.createElement("button");
+              btn.type = "button";
+              btn.className = "shield-btn" + ((card.shieldElement || "火") === elem ? " selected" : "");
+              btn.textContent = elem;
+              btn.addEventListener("click", (e) => {
+                e.stopPropagation();
+                localSlots[idx] = { ...card, shieldElement: elem };
+                renderGame();
+              });
+              picker.appendChild(btn);
+            });
+            div.appendChild(picker);
+          }
+
+          if (!locked) {
+            div.draggable = true;
+            div.title = "可拖曳至其他空槽互換，或點擊退回手牌";
+            div.addEventListener("dragstart", (e) => {
+              dragPayload = { source: "slot", fromIdx: idx };
+              e.dataTransfer.effectAllowed = "move";
+              e.dataTransfer.setData("text/plain", `slot:${idx}`);
+            });
+            div.addEventListener("dragend", () => {
+              dragPayload = null;
+            });
+            div.addEventListener("click", () => {
+              localSlots[idx] = null;
+              renderGame();
+            });
+          }
+        } else {
+          div.innerHTML = `${label}${moonBadge}<span style="color:#94a3b8;font-size:13px;">拖曳至此放置</span>`;
+        }
+        mySlotsGrid.appendChild(div);
+      });
+    }
+
+    function renderMyHand(hand, locked) {
+      myHandGrid.innerHTML = "";
+      if (locked) {
+        myHandGrid.innerHTML = `<span style="color:#64748b;">剩餘手牌已自動移至棄牌堆。</span>`;
+        return;
+      }
+      if (hand.length === 0) {
+        myHandGrid.innerHTML = `<span style="color:#64748b;">目前沒有手牌，請先點擊上方牌庫抽牌。</span>`;
+        return;
+      }
+      const placedIds = new Set(localSlots.filter(Boolean).map((c) => c.id));
+      const availableHand = hand.filter((c) => !placedIds.has(c.id));
+
+      availableHand.forEach((card) => {
+        const info = createCardContent(card, false);
+        const btn = document.createElement("div");
+        btn.className = `card-item ${info.typeClass}`;
+        btn.innerHTML = info.html;
+        btn.draggable = true;
+        btn.title = "拖曳至上方任意位置空槽";
+
+        btn.addEventListener("dragstart", (e) => {
+          dragPayload = { source: "hand", card };
+          e.dataTransfer.effectAllowed = "move";
+          e.dataTransfer.setData("text/plain", card.id);
+        });
+        btn.addEventListener("dragend", () => {
+          dragPayload = null;
+        });
+        myHandGrid.appendChild(btn);
+      });
+    }
+
+    function renderRevealRow(container, slots, resolvedUnits, player) {
+      container.innerHTML = "";
+      slots.forEach((card, idx) => {
+        const div = document.createElement("div");
+        div.className = "slot filled";
+        if (idx < resolvedUnits) div.classList.add("done-unit");
+        if (idx === resolvedUnits && resolvedUnits < 5) div.classList.add("active-unit");
+        const label = `<span class="slot-label">單位 ${idx + 1}</span>`;
+        const moonBadge = getMoonBadgeHtml(player, idx);
+        if (card) {
+          const info = createCardContent(card, true);
+          div.classList.add(info.typeClass);
+          div.innerHTML = label + moonBadge + info.html;
+        } else {
+          div.innerHTML = `${label}${moonBadge}<span>無</span>`;
+        }
+        container.appendChild(div);
+      });
+    }
+  </script>
+</body>
+</html>
