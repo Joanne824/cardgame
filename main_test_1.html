@@ -111,6 +111,73 @@
     .tag-enchant { background: #fef3c7; color: #b45309; }
     .tag-buff { background: #dcfce7; color: #15803d; }
     .tag-debuff { background: #fee2e2; color: #b91c1c; }
+    .tag-moon { background: #312e81; color: #e0e7ff; }
+    .tag-day { background: #fef9c3; color: #854d0e; }
+
+    /* 開局前設定：特性選擇與自訂牌庫 */
+    .trait-options {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin: 10px 0 14px;
+    }
+    .trait-card {
+      flex: 1;
+      min-width: 220px;
+      border: 2px solid #cbd5e1;
+      border-radius: 8px;
+      padding: 12px;
+      cursor: pointer;
+      background: #f8fafc;
+    }
+    .trait-card.selected {
+      border-color: #4f46e5;
+      background: #eef2ff;
+    }
+    .trait-desc {
+      font-size: 12px;
+      color: #475569;
+      margin-top: 6px;
+      line-height: 1.5;
+    }
+    .builder-toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin: 12px 0;
+      padding: 10px 12px;
+      background: #f1f5f9;
+      border-radius: 8px;
+    }
+    .builder-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+      gap: 10px;
+      margin-top: 8px;
+    }
+    .builder-item {
+      border: 2px solid #cbd5e1;
+      border-radius: 8px;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 6px;
+      background: #fff;
+    }
+    .builder-controls {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+      margin-top: 4px;
+    }
+    .mini-btn {
+      padding: 4px 10px;
+      font-size: 13px;
+    }
 
     .deck-area {
       display: flex;
@@ -175,11 +242,13 @@
     /* 屬性盾選擇按鈕 */
     .shield-picker {
       display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
       gap: 4px;
       margin-top: 6px;
     }
     .shield-btn {
-      padding: 2px 7px;
+      padding: 2px 6px;
       font-size: 11px;
       border-radius: 4px;
       background: #e2e8f0;
@@ -219,6 +288,7 @@
     .card-def { border-color: #3b82f6; background: #eff6ff; }
     .card-heal { border-color: #16a34a; background: #f0fdf4; }
     .card-util { border-color: #a855f7; background: #faf5ff; }
+    .card-moon { border-color: #4f46e5; background: #eef2ff; }
     .card-name { font-weight: 700; font-size: 15px; }
     .card-desc { font-size: 12px; color: #333; margin-top: 4px; font-weight: 600; }
     .card-meta { font-size: 11px; color: #64748b; margin-top: 3px; }
@@ -234,7 +304,7 @@
       color: #e2e8f0;
       border-radius: 8px;
       padding: 14px;
-      max-height: 320px;
+      max-height: 340px;
       overflow-y: auto;
       font-size: 13px;
       line-height: 1.7;
@@ -295,30 +365,69 @@
       </div>
     </div>
 
-    <!-- 雙方資訊（含血量、附魔、增傷、負面效果） -->
+    <!-- 雙方資訊（含血量、最大血量上限、特性狀態、附魔、增傷、負面效果） -->
     <div class="status-row">
       <div class="status-box">
         <div>
           <strong>對手狀態（<span id="oppRoleName">對手</span>）</strong>
-          <span class="hp-badge">HP：<span id="oppHp">10</span> / 10</span>
+          <span class="hp-badge">HP：<span id="oppHp">10</span> / <span id="oppMaxHp">10</span></span>
         </div>
-        <div>牌庫剩餘：<span id="oppDeckCount">60</span> 張 ｜ 棄牌堆：<span id="oppDiscardCount">0</span> 張</div>
+        <div>特性：<strong id="oppTraitName">設定中</strong> ｜ 牌庫剩餘：<span id="oppDeckCount">60</span> 張 ｜ 棄牌堆：<span id="oppDiscardCount">0</span> 張</div>
         <div>目前進度：<strong id="oppStatusText">等待中</strong></div>
         <div id="oppBuffRow" class="buff-row"></div>
       </div>
       <div class="status-box">
         <div>
           <strong>我方狀態（<span id="myRoleName">我方</span>）</strong>
-          <span class="hp-badge">HP：<span id="myHp">10</span> / 10</span>
+          <span class="hp-badge">HP：<span id="myHp">10</span> / <span id="myMaxHp">10</span></span>
         </div>
-        <div>牌庫剩餘：<span id="myDeckCount">60</span> 張 ｜ 棄牌堆：<span id="myDiscardCount">0</span> 張</div>
-        <div>目前進度：<strong id="myStatusText">請點擊牌庫抽牌</strong></div>
+        <div>特性：<strong id="myTraitName">設定中</strong> ｜ 牌庫剩餘：<span id="myDeckCount">60</span> 張 ｜ 棄牌堆：<span id="myDiscardCount">0</span> 張</div>
+        <div>目前進度：<strong id="myStatusText">請設定特性與牌庫</strong></div>
         <div id="myBuffRow" class="buff-row"></div>
       </div>
     </div>
 
+    <!-- 階段 0：開局前設定（步驟一：選擇特性；步驟二：建立自訂 60 張牌庫） -->
+    <div id="setupPhasePanel" class="panel hidden">
+      <h2>開局準備：步驟一、選擇【特性】</h2>
+      <div class="trait-options">
+        <div id="traitOptNone" class="trait-card">
+          <strong>無特性</strong>
+          <div class="trait-desc">不攜帶特性，僅使用基礎卡牌區組建 60 張牌庫。</div>
+        </div>
+        <div id="traitOptMoon" class="trait-card">
+          <strong>月華一（攻擊強化）</strong>
+          <div class="trait-desc">
+            每輪次 80% 進入【夜幕】、20% 進入【白晝】。夜幕每行動 60% 新月／30% 弦月／10% 滿月，基礎傷害 +10%/20%/60%、暗傷抗閃避 +10%/20%/40%（滿月無視暗盾），每行動結束自動蓄能獲得 0/1/3 層【月】。可加入「夜幕降臨、月相強化、蝕月禁典」。
+          </div>
+        </div>
+      </div>
+
+      <h2>步驟二、建立自訂牌庫（需滿 60 張）</h2>
+      <div class="builder-toolbar">
+        <div>
+          目前牌庫總張數：<strong id="builderTotalCount" style="font-size:18px;">60</strong> / 60 張
+          <span id="builderCountHint" style="margin-left:8px; color:#15803d; font-weight:600;"></span>
+        </div>
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+          <button id="fillDefaultDeckBtn" type="button" class="secondary">套用預設 60 張基礎牌組</button>
+          <button id="clearDeckBtn" type="button" class="secondary">全部歸零</button>
+          <button id="confirmSetupBtn" type="button" class="success">確認特性與牌庫（進入對戰）</button>
+        </div>
+      </div>
+      <div id="setupWaitMsg" class="waiting-note hidden">你已完成特性與牌庫設定，等待對手完成設定...</div>
+
+      <h3 style="margin-top:16px;">基礎卡牌區</h3>
+      <div id="baseCardBuilderGrid" class="builder-grid"></div>
+
+      <div id="traitCardSection" class="hidden">
+        <h3 style="margin-top:20px; color:#4338ca;">特性卡牌區【月華一】</h3>
+        <div id="traitCardBuilderGrid" class="builder-grid"></div>
+      </div>
+    </div>
+
     <!-- 階段 A：動作一～動作四（抽牌、放五張到空槽、確認） -->
-    <div id="playPhasePanel" class="panel">
+    <div id="playPhasePanel" class="panel hidden">
       <h3>動作一：點擊牌庫抽 10 張牌</h3>
       <div class="deck-area">
         <button id="drawDeckBtn" class="deck-btn">
@@ -399,32 +508,49 @@
     };
 
     const INITIAL_HP = 10;
+    const REQUIRED_DECK_SIZE = 60;
 
-    // 依新版規則統一更新的 60 張牌組
-    const CARD_TEMPLATES = [
-      { name: "基礎劍招", count: 10, turns: 1, trigger: "物理屬性",       value: 3,     effect: "攻擊",           effectChance: "", type: "atk"  },
-      { name: "閃避",     count: 9,  turns: 1, trigger: "機率50%",        value: "80%", effect: "減傷",           effectChance: "", type: "def"  },
-      { name: "物理防禦", count: 4,  turns: 1, trigger: "僅擋物理",       value: "80%", effect: "減傷",           effectChance: "", type: "def"  },
-      { name: "回復",     count: 4,  turns: 1, trigger: "被攻擊時減半",   value: 2,     effect: "治療",           effectChance: "", type: "heal" },
-      { name: "淨化",     count: 4,  turns: 1, trigger: "",               value: "",    effect: "清除負面效果",   effectChance: "", type: "util" },
-      { name: "破甲",     count: 2,  turns: 1, trigger: "下張牌有效",     value: "",    effect: "物理防禦/屬性盾無效", effectChance: "", type: "util" },
-      { name: "禁錮",     count: 2,  turns: 1, trigger: "下張牌有效",     value: "",    effect: "閃避無效",       effectChance: "", type: "util" },
-      { name: "鋒利",     count: 7,  turns: 1, trigger: "下張攻擊前",     value: "+2",  effect: "攻擊增傷",       effectChance: "", type: "atk"  },
-      { name: "屬性盾",   count: 6,  turns: 1, trigger: "猜中屬性",       value: "100%",effect: "抵銷並反10%傷",  effectChance: "", type: "def"  },
-      { name: "火附魔",   count: 4,  turns: 1, trigger: "下張攻擊變火",   value: "+10%",effect: "增傷10%",        effectChance: "", type: "util" },
-      { name: "水附魔",   count: 4,  turns: 1, trigger: "下張攻擊變水",   value: "+10%",effect: "增傷10%",        effectChance: "", type: "util" },
-      { name: "雷附魔",   count: 4,  turns: 1, trigger: "下張攻擊變雷",   value: "+10%",effect: "增傷10%",        effectChance: "", type: "util" }
+    // 基礎卡牌區（預設 60 張）
+    const BASE_CARD_TEMPLATES = [
+      { name: "基礎劍招", count: 10, turns: 1, trigger: "物理屬性",     value: 3,      effect: "攻擊",               effectChance: "", type: "atk"  },
+      { name: "閃避",     count: 9,  turns: 1, trigger: "機率50%",      value: "80%",  effect: "減傷",               effectChance: "", type: "def"  },
+      { name: "物理防禦", count: 4,  turns: 1, trigger: "僅擋物理",     value: "80%",  effect: "減傷",               effectChance: "", type: "def"  },
+      { name: "回復",     count: 4,  turns: 1, trigger: "被攻擊時減半", value: 2,      effect: "治療",               effectChance: "", type: "heal" },
+      { name: "淨化",     count: 4,  turns: 1, trigger: "",             value: "",     effect: "清除負面效果",       effectChance: "", type: "util" },
+      { name: "破甲",     count: 2,  turns: 1, trigger: "下張牌有效",   value: "",     effect: "物理防禦/屬性盾無效", effectChance: "", type: "util" },
+      { name: "禁錮",     count: 2,  turns: 1, trigger: "下張牌有效",   value: "",     effect: "閃避無效",           effectChance: "", type: "util" },
+      { name: "鋒利",     count: 7,  turns: 1, trigger: "下張攻擊前",   value: "+2",   effect: "攻擊增傷",           effectChance: "", type: "atk"  },
+      { name: "屬性盾",   count: 6,  turns: 1, trigger: "猜中屬性",     value: "100%", effect: "抵銷並反10%傷",      effectChance: "", type: "def"  },
+      { name: "火附魔",   count: 4,  turns: 1, trigger: "下張攻擊變火", value: "+10%", effect: "增傷10%",            effectChance: "", type: "util" },
+      { name: "水附魔",   count: 4,  turns: 1, trigger: "下張攻擊變水", value: "+10%", effect: "增傷10%",            effectChance: "", type: "util" },
+      { name: "雷附魔",   count: 4,  turns: 1, trigger: "下張攻擊變雷", value: "+10%", effect: "增傷10%",            effectChance: "", type: "util" }
     ];
+
+    // 特性【月華一】專屬卡牌區
+    const TRAIT_CARDS_BY_TRAIT = {
+      "月華一": [
+        { name: "夜幕降臨", count: 0, turns: 1, trigger: "白晝耗3月轉夜幕/夜幕耗1月", value: "+30%", effect: "本輪閃避率提升", effectChance: "", type: "moon" },
+        { name: "月相強化", count: 0, turns: 1, trigger: "夜幕耗3月",                  value: "20/40/120%", effect: "強化本輪月相增傷", effectChance: "", type: "moon" },
+        { name: "蝕月禁典", count: 0, turns: 1, trigger: "夜幕耗全部月",               value: "暗3+", effect: "暗屬性強化攻擊", effectChance: "", type: "moon" }
+      ]
+    };
+
+    const ALL_CARD_MAP = {};
+    [...BASE_CARD_TEMPLATES, ...TRAIT_CARDS_BY_TRAIT["月華一"]].forEach((c) => {
+      ALL_CARD_MAP[c.name] = c;
+    });
 
     function round2(n) {
       return Math.round(n * 100) / 100;
     }
 
-    function createShuffledDeck() {
+    function buildShuffledDeckFromCounts(countsObj) {
       const deck = [];
       let uid = 1;
-      for (const tpl of CARD_TEMPLATES) {
-        for (let i = 0; i < tpl.count; i++) {
+      Object.entries(countsObj).forEach(([name, qty]) => {
+        const tpl = ALL_CARD_MAP[name];
+        if (!tpl || !qty || qty <= 0) return;
+        for (let i = 0; i < qty; i++) {
           deck.push({
             id: `c_${uid++}_${Math.random().toString(36).slice(2, 6)}`,
             name: tpl.name,
@@ -436,7 +562,7 @@
             type: tpl.type
           });
         }
-      }
+      });
       for (let i = deck.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
         [deck[i], deck[j]] = [deck[j], deck[i]];
@@ -448,24 +574,33 @@
       return {
         enchant: "",       // "" | "火" | "水" | "雷"
         sharpStacks: 0,    // 鋒利層數（每層 +2）
-        armorBreak: false, // 破甲（下張牌判定結束前：物理防禦、屬性盾無效）
-        root: false        // 禁錮（下張牌判定結束前：閃避無效）
+        armorBreak: false, // 破甲
+        root: false,       // 禁錮
+        // 月華一專用狀態
+        skyState: "",      // "" | "夜幕" | "白晝"
+        moonPhase: "",     // "" | "新月" | "弦月" | "滿月"
+        moonStacks: 0,     // 【月】層數
+        dodgeBonus: 0,     // 夜幕降臨提供之本輪次閃避機率加成（小數，如 0.3）
+        moonEnhanced: false // 本輪次是否已施放月相強化
       };
     }
 
-    function createInitialMatch(actionText = "已建立新對局並洗好雙方 60 張牌庫") {
+    function createInitialMatch(actionText = "已建立新對局，請雙方選擇特性並組建 60 張牌庫") {
       return {
         matchId: Date.now(),
         round: 1,
-        phase: "playing", // playing | ended
+        phase: "setup", // setup | playing | ended
         endReason: "",
-        resolvedUnits: 0, // 本回合已結算單位數 (0 ~ 5)
+        resolvedUnits: 0,
         combatLog: [],
         lastAction: actionText,
         p1: {
           hp: INITIAL_HP,
+          maxHp: INITIAL_HP,
+          trait: "無",
+          setupReady: false,
           status: createEmptyStatus(),
-          deck: createShuffledDeck(),
+          deck: [],
           hand: [],
           slots: [false, false, false, false, false],
           discard: [],
@@ -476,8 +611,11 @@
         },
         p2: {
           hp: INITIAL_HP,
+          maxHp: INITIAL_HP,
+          trait: "無",
+          setupReady: false,
           status: createEmptyStatus(),
-          deck: createShuffledDeck(),
+          deck: [],
           hand: [],
           slots: [false, false, false, false, false],
           discard: [],
@@ -508,19 +646,66 @@
         enchant: st?.enchant || "",
         sharpStacks: st?.sharpStacks || 0,
         armorBreak: !!st?.armorBreak,
-        root: !!st?.root
+        root: !!st?.root,
+        skyState: st?.skyState || "",
+        moonPhase: st?.moonPhase || "",
+        moonStacks: st?.moonStacks || 0,
+        dodgeBonus: st?.dodgeBonus || 0,
+        moonEnhanced: !!st?.moonEnhanced
       };
     }
 
+    // 每輪次開始時，為【月華一】玩家判定 80% 夜幕 / 20% 白晝，並重置輪次型加成
+    function rollRoundStartTraits(data) {
+      const logs = toArr(data.combatLog);
+      const applyForPlayer = (player, name) => {
+        player.status = normalizeStatus(player.status);
+        player.status.dodgeBonus = 0;
+        player.status.moonEnhanced = false;
+        player.status.moonPhase = "";
+        if (player.trait === "月華一") {
+          const isNight = Math.random() < 0.8;
+          player.status.skyState = isNight ? "夜幕" : "白晝";
+          logs.push({
+            type: "info",
+            text: `[輪次開始｜月華一] ${name} 判定結果（80%夜幕/20%白晝）→ 進入【${player.status.skyState}】狀態（目前【月】：${player.status.moonStacks} 層）。`
+          });
+        } else {
+          player.status.skyState = "";
+        }
+      };
+      applyForPlayer(data.p1, "P1");
+      applyForPlayer(data.p2, "P2");
+      data.combatLog = logs;
+    }
+
+    // 取得月華一目前的傷害提升倍率與抗閃避數值
+    function getMoonPhaseStats(status) {
+      if (status.skyState !== "夜幕" || !status.moonPhase) {
+        return { dmgBonusRate: 0, antiDodge: 0, ignoreDarkShield: false, chargeGain: 0 };
+      }
+      const enh = !!status.moonEnhanced;
+      if (status.moonPhase === "新月") {
+        return { dmgBonusRate: enh ? 0.2 : 0.1, antiDodge: 0.1, ignoreDarkShield: false, chargeGain: 0 };
+      }
+      if (status.moonPhase === "弦月") {
+        return { dmgBonusRate: enh ? 0.4 : 0.2, antiDodge: 0.2, ignoreDarkShield: false, chargeGain: 1 };
+      }
+      // 滿月
+      return { dmgBonusRate: enh ? 1.2 : 0.6, antiDodge: 0.4, ignoreDarkShield: true, chargeGain: 3 };
+    }
+
     // =========================================================
-    // 核心：單一單位戰鬥結算（嚴格依指定順序）
-    // 順序：負面效果與被動 -> 附魔及增傷 -> 攻擊類 -> 防禦類 -> 效果類 -> 屬性附魔類
+    // 核心：單一單位戰鬥結算
+    // 順序：負面效果與被動 -> 附魔及增傷 -> 攻擊類 -> 防禦類 -> 效果類 -> 屬性附魔類 -> 行動結束蓄能
     // =========================================================
     function resolveOneUnit(data, unitIdx) {
       const p1 = data.p1;
       const p2 = data.p2;
       p1.status = normalizeStatus(p1.status);
       p2.status = normalizeStatus(p2.status);
+      p1.maxHp = p1.maxHp ?? INITIAL_HP;
+      p2.maxHp = p2.maxHp ?? INITIAL_HP;
 
       const s1Slots = toSlots(p1.slots);
       const s2Slots = toSlots(p2.slots);
@@ -534,9 +719,30 @@
       const c2Label = c2 ? (c2.name === "屬性盾" ? `屬性盾(${c2.shieldElement || "火"})` : c2.name) : "無";
       logs.push({ type: "header", text: `【第 ${data.round} 回合 - 單位 ${unitNo}】P1 出牌「${c1Label}」 VS P2 出牌「${c2Label}」` });
 
-      // 1. 身上之負面效果以及被動（記錄本單位生效的既有負面效果）
+      // 1. 身上之負面效果以及被動（包含月華一在夜幕狀態下每行動的月相判定）
       const p1Debuff = { armorBreak: p1.status.armorBreak, root: p1.status.root };
       const p2Debuff = { armorBreak: p2.status.armorBreak, root: p2.status.root };
+
+      const rollActionMoon = (player, name) => {
+        if (player.trait !== "月華一") return;
+        if (player.status.skyState === "夜幕") {
+          const r = Math.random();
+          if (r < 0.6) player.status.moonPhase = "新月";
+          else if (r < 0.9) player.status.moonPhase = "弦月";
+          else player.status.moonPhase = "滿月";
+          const ms = getMoonPhaseStats(player.status);
+          logs.push({
+            type: "info",
+            text: `[1.特性被動] ${name}【月華一】進入【夜幕．${player.status.moonPhase}】（基礎傷害+${Math.round(ms.dmgBonusRate * 100)}%、暗傷抗閃避+${Math.round(ms.antiDodge * 100)}%${ms.ignoreDarkShield ? "、滿月無視暗屬性盾" : ""}）。`
+          });
+        } else {
+          player.status.moonPhase = "";
+          logs.push({ type: "info", text: `[1.特性被動] ${name}【月華一】目前為【白晝】狀態。` });
+        }
+      };
+
+      rollActionMoon(p1, "P1");
+      rollActionMoon(p2, "P2");
 
       const fmtDebuff = (d) => {
         const list = [];
@@ -546,37 +752,120 @@
       };
       logs.push({ type: "info", text: `[1.負面效果檢查] P1(${fmtDebuff(p1Debuff)}) ｜ P2(${fmtDebuff(p2Debuff)})` });
 
-      // 2. 附魔及增傷（若本單位出攻擊類卡牌，計算強化後的最終攻擊力與屬性）
-      const calcAttack = (playerName, card, status) => {
-        if (!card || card.name !== "基礎劍招") return null;
-        let dmg = 3;
-        const notes = ["基礎3"];
-        if (status.sharpStacks > 0) {
-          const bonus = status.sharpStacks * 2;
-          dmg += bonus;
-          notes.push(`鋒利+${bonus}`);
+      // 2. 附魔及增傷（處理基礎劍招與蝕月禁典）
+      const calcAttack = (playerName, card, player) => {
+        if (!card) return null;
+        const status = player.status;
+        const ms = getMoonPhaseStats(status);
+
+        if (card.name === "基礎劍招") {
+          let baseDmg = 3;
+          const notes = ["基礎3"];
+          if (ms.dmgBonusRate > 0) {
+            baseDmg = round2(baseDmg * (1 + ms.dmgBonusRate));
+            notes.push(`夜幕.${status.moonPhase}+${Math.round(ms.dmgBonusRate * 100)}%`);
+          }
+          let dmg = baseDmg;
+          if (status.sharpStacks > 0) {
+            const bonus = status.sharpStacks * 2;
+            dmg = round2(dmg + bonus);
+            notes.push(`鋒利+${bonus}`);
+          }
+          let element = "物理";
+          if (status.enchant) {
+            element = status.enchant;
+            dmg = round2(dmg * 1.1);
+            notes.push(`${element}附魔×1.1`);
+          }
+          logs.push({ type: "info", text: `[2.附魔與增傷] ${playerName} 發動「基礎劍招」（${notes.join("、")}）→ 【${element}屬性 ${dmg} 傷害】` });
+          return {
+            cardName: "基礎劍招",
+            dmg,
+            element,
+            antiDodge: 0,
+            undodgeable: false,
+            ignoreDarkShield: false,
+            reduceMaxHpRatio: 0,
+            consumedAttackBuffs: true
+          };
         }
-        let element = "物理";
-        if (status.enchant) {
-          element = status.enchant;
-          dmg = round2(dmg * 1.1);
-          notes.push(`${element}附魔×1.1`);
+
+        if (card.name === "蝕月禁典") {
+          if (status.skyState !== "夜幕") {
+            logs.push({ type: "info", text: `[2.特性攻擊] ${playerName} 試圖施放「蝕月禁典」，但目前為【白晝】狀態，無法施放！` });
+            return null;
+          }
+          const consumed = status.moonStacks || 0;
+          status.moonStacks = 0;
+
+          let baseDmg = 3;
+          const notes = [`暗基礎3`];
+          if (ms.dmgBonusRate > 0) {
+            baseDmg = round2(baseDmg * (1 + ms.dmgBonusRate));
+            notes.push(`夜幕.${status.moonPhase}+${Math.round(ms.dmgBonusRate * 100)}%`);
+          }
+
+          let layerBonus = 0;
+          let extraAntiDodge = ms.antiDodge; // 月相本身強化暗屬性抗閃避
+          let undodgeable = false;
+          let reduceMaxHpRatio = 0;
+
+          if (status.moonPhase === "新月") {
+            layerBonus = consumed * 1;
+            extraAntiDodge = round2(extraAntiDodge + consumed * 0.01);
+            notes.push(`新月消耗${consumed}層月(+${layerBonus}傷、抗閃避+${consumed}%)`);
+          } else if (status.moonPhase === "弦月") {
+            layerBonus = consumed * 3;
+            reduceMaxHpRatio = 0.1;
+            notes.push(`弦月消耗${consumed}層月(+${layerBonus}傷、降敵方上限10%傷)`);
+          } else if (status.moonPhase === "滿月") {
+            layerBonus = consumed * 4;
+            if (consumed > 30) undodgeable = true;
+            notes.push(`滿月消耗${consumed}層月(+${layerBonus}傷${undodgeable ? "、超過30層無法閃避" : ""})`);
+          }
+
+          let dmg = round2(baseDmg + layerBonus);
+          if (status.sharpStacks > 0) {
+            const bonus = status.sharpStacks * 2;
+            dmg = round2(dmg + bonus);
+            notes.push(`鋒利+${bonus}`);
+          }
+          if (status.enchant) {
+            dmg = round2(dmg * 1.1);
+            notes.push(`${status.enchant}附魔增傷×1.1(維持暗屬性)`);
+          }
+
+          logs.push({
+            type: "info",
+            text: `[2.附魔與增傷] ${playerName} 發動「蝕月禁典」（${notes.join("、")}）→ 【暗屬性 ${dmg} 傷害】`
+          });
+
+          return {
+            cardName: "蝕月禁典",
+            dmg,
+            element: "暗",
+            antiDodge: extraAntiDodge,
+            undodgeable,
+            ignoreDarkShield: ms.ignoreDarkShield,
+            reduceMaxHpRatio,
+            consumedAttackBuffs: true
+          };
         }
-        logs.push({ type: "info", text: `[2.附魔與增傷] ${playerName} 發動基礎劍招（${notes.join("、")}）→ 【${element}屬性 ${dmg} 傷害】` });
-        return { dmg, element };
+
+        return null;
       };
 
-      const atk1 = calcAttack("P1", c1, p1.status);
-      const atk2 = calcAttack("P2", c2, p2.status);
+      const atk1 = calcAttack("P1", c1, p1);
+      const atk2 = calcAttack("P2", c2, p2);
 
       // 3 & 4. 攻擊類 -> 防禦類
-      const resolveCombatPair = (atkName, defName, atkInfo, defCard, defDebuff) => {
+      const resolveCombatPair = (atkName, defName, atkInfo, defCard, defPlayer, defDebuff) => {
         const isDefCard = defCard && (defCard.name === "閃避" || defCard.name === "物理防禦" || defCard.name === "屬性盾");
         if (!atkInfo) {
           if (isDefCard) {
             logs.push({ type: "info", text: `[4.防禦類] ${defName} 的「${defCard.name}」因對方此位置非攻擊牌，無效。` });
           }
-          return { dmgToDef: 0, reflectToAtk: 0 };
+          return { dmgToDef: 0, reflectToAtk: 0, reduceMaxHpRatio: 0 };
         }
 
         let dmgToDef = atkInfo.dmg;
@@ -585,11 +874,18 @@
         if (defCard && defCard.name === "閃避") {
           if (defDebuff.root) {
             logs.push({ type: "info", text: `[4.防禦類] ${defName} 的「閃避」因【禁錮】100% 無效！承受 ${dmgToDef} 點傷害。` });
-          } else if (Math.random() < 0.5) {
-            dmgToDef = round2(atkInfo.dmg * 0.2);
-            logs.push({ type: "info", text: `[4.防禦類] ${defName}「閃避」成功(50%)！抵擋 80% 傷害，僅受 ${dmgToDef} 點傷害。` });
+          } else if (atkInfo.undodgeable) {
+            logs.push({ type: "info", text: `[4.防禦類] ${atkName} 的「蝕月禁典」於滿月消耗超過 30 層【月】，無法被閃避！${defName} 承受 ${dmgToDef} 點傷害。` });
           } else {
-            logs.push({ type: "info", text: `[4.防禦類] ${defName}「閃避」失敗(50%)！未能減傷，承受 ${dmgToDef} 點傷害。` });
+            const baseDodge = 0.5 + (defPlayer.status.dodgeBonus || 0);
+            const finalDodgeChance = Math.max(0, Math.min(1, round2(baseDodge - (atkInfo.antiDodge || 0))));
+            const pctText = `${Math.round(finalDodgeChance * 100)}%`;
+            if (Math.random() < finalDodgeChance) {
+              dmgToDef = round2(atkInfo.dmg * 0.2);
+              logs.push({ type: "info", text: `[4.防禦類] ${defName}「閃避」成功（判定率 ${pctText}）！抵擋 80% 傷害，僅受 ${dmgToDef} 點傷害。` });
+            } else {
+              logs.push({ type: "info", text: `[4.防禦類] ${defName}「閃避」失敗（判定率 ${pctText}）！未能減傷，承受 ${dmgToDef} 點傷害。` });
+            }
           }
         } else if (defCard && defCard.name === "物理防禦") {
           if (defDebuff.armorBreak) {
@@ -604,6 +900,8 @@
           const chosen = defCard.shieldElement || "火";
           if (defDebuff.armorBreak) {
             logs.push({ type: "info", text: `[4.防禦類] ${defName} 的「屬性盾(${chosen})」因【破甲】無效化！承受 ${dmgToDef} 點傷害。` });
+          } else if (atkInfo.element === "暗" && chosen === "暗" && atkInfo.ignoreDarkShield) {
+            logs.push({ type: "info", text: `[4.防禦類] ${atkName} 處於【夜幕．滿月】，暗屬性傷害無視「屬性盾(暗)」防禦！${defName} 承受 ${dmgToDef} 點傷害。` });
           } else if (atkInfo.element === chosen) {
             dmgToDef = 0;
             reflectToAtk = round2(atkInfo.dmg * 0.1);
@@ -615,22 +913,36 @@
           logs.push({ type: "info", text: `[3.攻擊類] ${atkName} 的【${atkInfo.element}】攻擊直接命中 ${defName}，造成 ${dmgToDef} 點傷害。` });
         }
 
-        return { dmgToDef, reflectToAtk };
+        return { dmgToDef, reflectToAtk, reduceMaxHpRatio: atkInfo.reduceMaxHpRatio || 0 };
       };
 
-      const res1vs2 = resolveCombatPair("P1", "P2", atk1, c2, p2Debuff);
-      const res2vs1 = resolveCombatPair("P2", "P1", atk2, c1, p1Debuff);
+      const res1vs2 = resolveCombatPair("P1", "P2", atk1, c2, p2, p2Debuff);
+      const res2vs1 = resolveCombatPair("P2", "P1", atk2, c1, p1, p1Debuff);
 
       // 套用攻防傷害與反傷
       p2.hp = round2((p2.hp ?? INITIAL_HP) - res1vs2.dmgToDef - res2vs1.reflectToAtk);
       p1.hp = round2((p1.hp ?? INITIAL_HP) - res2vs1.dmgToDef - res1vs2.reflectToAtk);
 
+      // 弦月蝕月禁典：敵方最大血量上限永久降低此次傷害的 10%
+      if (res1vs2.reduceMaxHpRatio > 0 && res1vs2.dmgToDef > 0) {
+        const cut = round2(res1vs2.dmgToDef * res1vs2.reduceMaxHpRatio);
+        p2.maxHp = Math.max(0, round2(p2.maxHp - cut));
+        if (p2.hp > p2.maxHp) p2.hp = p2.maxHp;
+        logs.push({ type: "info", text: `[弦月蝕月效果] P2 最大血量上限永久降低 ${cut}（目前上限：${p2.maxHp}）。` });
+      }
+      if (res2vs1.reduceMaxHpRatio > 0 && res2vs1.dmgToDef > 0) {
+        const cut = round2(res2vs1.dmgToDef * res2vs1.reduceMaxHpRatio);
+        p1.maxHp = Math.max(0, round2(p1.maxHp - cut));
+        if (p1.hp > p1.maxHp) p1.hp = p1.maxHp;
+        logs.push({ type: "info", text: `[弦月蝕月效果] P1 最大血量上限永久降低 ${cut}（目前上限：${p1.maxHp}）。` });
+      }
+
       // 打出攻擊牌後，附魔與鋒利失效
-      if (atk1) {
+      if (atk1 && atk1.consumedAttackBuffs) {
         p1.status.enchant = "";
         p1.status.sharpStacks = 0;
       }
-      if (atk2) {
+      if (atk2 && atk2.consumedAttackBuffs) {
         p2.status.enchant = "";
         p2.status.sharpStacks = 0;
       }
@@ -641,13 +953,13 @@
       p2.status.armorBreak = false;
       p2.status.root = false;
 
-      // 5. 效果類（回復、破甲、禁錮、鋒利、淨化）
+      // 5. 效果類（回復、破甲、禁錮、鋒利、夜幕降臨、月相強化、淨化）
       const applyEffectNonCleanse = (selfName, oppName, card, selfPlayer, oppPlayer, oppAttacked) => {
         if (!card) return;
         if (card.name === "回復") {
           const heal = oppAttacked ? 1 : 2;
           const before = selfPlayer.hp;
-          selfPlayer.hp = round2(Math.min(INITIAL_HP, selfPlayer.hp + heal));
+          selfPlayer.hp = round2(Math.min(selfPlayer.maxHp, selfPlayer.hp + heal));
           const reason = oppAttacked ? "對方同位置攻擊，效果減半 +1" : "回復 +2";
           logs.push({ type: "info", text: `[5.效果類] ${selfName} 發動「回復」（${reason}），HP ${before} → ${selfPlayer.hp}` });
         } else if (card.name === "破甲") {
@@ -659,6 +971,37 @@
         } else if (card.name === "鋒利") {
           selfPlayer.status.sharpStacks = (selfPlayer.status.sharpStacks || 0) + 1;
           logs.push({ type: "info", text: `[5.效果類] ${selfName} 發動「鋒利」，下一次攻擊數值 +2（目前累計 +${selfPlayer.status.sharpStacks * 2}）。` });
+        } else if (card.name === "夜幕降臨") {
+          if (selfPlayer.status.skyState === "白晝") {
+            if (selfPlayer.status.moonStacks >= 3) {
+              selfPlayer.status.moonStacks -= 3;
+              selfPlayer.status.skyState = "夜幕";
+              selfPlayer.status.dodgeBonus = round2((selfPlayer.status.dodgeBonus || 0) + 0.3);
+              logs.push({ type: "info", text: `[5.特性效果] ${selfName} 於白晝發動「夜幕降臨」，消耗 3 層【月】轉化為【夜幕】狀態，本輪閃避率 +30%（剩餘【月】：${selfPlayer.status.moonStacks}）。` });
+            } else {
+              logs.push({ type: "info", text: `[5.特性效果] ${selfName} 於白晝發動「夜幕降臨」，但【月】不足 3 層（目前 ${selfPlayer.status.moonStacks}），施放失敗。` });
+            }
+          } else if (selfPlayer.status.skyState === "夜幕") {
+            if (selfPlayer.status.moonStacks >= 1) {
+              selfPlayer.status.moonStacks -= 1;
+              selfPlayer.status.dodgeBonus = round2((selfPlayer.status.dodgeBonus || 0) + 0.3);
+              logs.push({ type: "info", text: `[5.特性效果] ${selfName} 於夜幕發動「夜幕降臨」，消耗 1 層【月】，本輪閃避率 +30%（剩餘【月】：${selfPlayer.status.moonStacks}）。` });
+            } else {
+              logs.push({ type: "info", text: `[5.特性效果] ${selfName} 於夜幕發動「夜幕降臨」，但【月】不足 1 層，施放失敗。` });
+            }
+          } else {
+            logs.push({ type: "info", text: `[5.特性效果] ${selfName} 未持有【月華一】狀態，「夜幕降臨」無效。` });
+          }
+        } else if (card.name === "月相強化") {
+          if (selfPlayer.status.skyState !== "夜幕") {
+            logs.push({ type: "info", text: `[5.特性效果] ${selfName} 試圖發動「月相強化」，但目前為【白晝】狀態，無法施放。` });
+          } else if (selfPlayer.status.moonStacks >= 3) {
+            selfPlayer.status.moonStacks -= 3;
+            selfPlayer.status.moonEnhanced = true;
+            logs.push({ type: "info", text: `[5.特性效果] ${selfName} 發動「月相強化」，消耗 3 層【月】，本輪月相基礎攻擊增傷提升為 20%/40%/120%（剩餘【月】：${selfPlayer.status.moonStacks}）。` });
+          } else {
+            logs.push({ type: "info", text: `[5.特性效果] ${selfName} 發動「月相強化」，但【月】不足 3 層（目前 ${selfPlayer.status.moonStacks}），施放失敗。` });
+          }
         }
       };
 
@@ -690,14 +1033,29 @@
       applyEnchant("P1", c1, p1);
       applyEnchant("P2", c2, p2);
 
+      // 7. 行動結束：月華一自動施放一次【蓄能】（不消耗行動，新月+0 / 弦月+1 / 滿月+3）
+      const applyEndCharge = (player, name) => {
+        if (player.trait !== "月華一") return;
+        const ms = getMoonPhaseStats(player.status);
+        if (player.status.skyState === "夜幕" && player.status.moonPhase) {
+          player.status.moonStacks = (player.status.moonStacks || 0) + ms.chargeGain;
+          logs.push({
+            type: "info",
+            text: `[行動結束｜蓄能] ${name} 處於【夜幕．${player.status.moonPhase}】，自動蓄能 +${ms.chargeGain} 層【月】（目前【月】：${player.status.moonStacks} 層）。`
+          });
+        }
+      };
+      applyEndCharge(p1, "P1");
+      applyEndCharge(p2, "P2");
+
       // 血量下限歸零與勝負判定
-      p1.hp = Math.max(0, round2(p1.hp));
-      p2.hp = Math.max(0, round2(p2.hp));
-      logs.push({ type: "hp", text: `→ 單位 ${unitNo} 結算完成：P1 血量 = ${p1.hp} ｜ P2 血量 = ${p2.hp}` });
+      p1.hp = Math.max(0, Math.min(p1.maxHp, round2(p1.hp)));
+      p2.hp = Math.max(0, Math.min(p2.maxHp, round2(p2.hp)));
+      logs.push({ type: "hp", text: `→ 單位 ${unitNo} 結算完成：P1 血量 = ${p1.hp}/${p1.maxHp} ｜ P2 血量 = ${p2.hp}/${p2.maxHp}` });
 
       data.resolvedUnits = unitNo;
       data.combatLog = logs;
-      data.lastAction = `已完成第 ${data.round} 回合「單位 ${unitNo}」結算（P1 HP: ${p1.hp} / P2 HP: ${p2.hp}）`;
+      data.lastAction = `已完成第 ${data.round} 回合「單位 ${unitNo}」結算（P1 HP: ${p1.hp}/${p1.maxHp} / P2 HP: ${p2.hp}/${p2.maxHp}）`;
 
       if (p1.hp <= 0 || p2.hp <= 0) {
         data.phase = "ended";
@@ -730,6 +1088,8 @@
 
     const oppRoleNameEl = document.getElementById("oppRoleName");
     const oppHpEl = document.getElementById("oppHp");
+    const oppMaxHpEl = document.getElementById("oppMaxHp");
+    const oppTraitNameEl = document.getElementById("oppTraitName");
     const oppDeckCountEl = document.getElementById("oppDeckCount");
     const oppDiscardCountEl = document.getElementById("oppDiscardCount");
     const oppStatusTextEl = document.getElementById("oppStatusText");
@@ -737,10 +1097,26 @@
 
     const myRoleNameEl = document.getElementById("myRoleName");
     const myHpEl = document.getElementById("myHp");
+    const myMaxHpEl = document.getElementById("myMaxHp");
+    const myTraitNameEl = document.getElementById("myTraitName");
     const myDeckCountEl = document.getElementById("myDeckCount");
     const myDiscardCountEl = document.getElementById("myDiscardCount");
     const myStatusTextEl = document.getElementById("myStatusText");
     const myBuffRowEl = document.getElementById("myBuffRow");
+
+    // 開局前設定 DOM
+    const setupPhasePanel = document.getElementById("setupPhasePanel");
+    const traitOptNone = document.getElementById("traitOptNone");
+    const traitOptMoon = document.getElementById("traitOptMoon");
+    const builderTotalCount = document.getElementById("builderTotalCount");
+    const builderCountHint = document.getElementById("builderCountHint");
+    const fillDefaultDeckBtn = document.getElementById("fillDefaultDeckBtn");
+    const clearDeckBtn = document.getElementById("clearDeckBtn");
+    const confirmSetupBtn = document.getElementById("confirmSetupBtn");
+    const setupWaitMsg = document.getElementById("setupWaitMsg");
+    const baseCardBuilderGrid = document.getElementById("baseCardBuilderGrid");
+    const traitCardSection = document.getElementById("traitCardSection");
+    const traitCardBuilderGrid = document.getElementById("traitCardBuilderGrid");
 
     const playPhasePanel = document.getElementById("playPhasePanel");
     const drawDeckBtn = document.getElementById("drawDeckBtn");
@@ -774,6 +1150,72 @@
     let unsubscribeMatch = null;
     let localSlots = [null, null, null, null, null];
     let lastRoundToken = "";
+    let lastMatchId = null;
+
+    // 本地自訂牌庫與特性狀態
+    let selectedTrait = "無";
+    let customCounts = {};
+
+    function resetLocalBuilderToDefault() {
+      customCounts = {};
+      BASE_CARD_TEMPLATES.forEach((c) => { customCounts[c.name] = c.count; });
+      TRAIT_CARDS_BY_TRAIT["月華一"].forEach((c) => { customCounts[c.name] = 0; });
+    }
+    resetLocalBuilderToDefault();
+
+    function getBuilderTotal() {
+      return Object.values(customCounts).reduce((sum, n) => sum + (n || 0), 0);
+    }
+
+    traitOptNone.addEventListener("click", () => {
+      if (matchData && myRole && matchData[myRole.key]?.setupReady) return;
+      selectedTrait = "無";
+      TRAIT_CARDS_BY_TRAIT["月華一"].forEach((c) => { customCounts[c.name] = 0; });
+      renderSetupPanel();
+    });
+
+    traitOptMoon.addEventListener("click", () => {
+      if (matchData && myRole && matchData[myRole.key]?.setupReady) return;
+      selectedTrait = "月華一";
+      renderSetupPanel();
+    });
+
+    fillDefaultDeckBtn.addEventListener("click", () => {
+      if (matchData && myRole && matchData[myRole.key]?.setupReady) return;
+      resetLocalBuilderToDefault();
+      renderSetupPanel();
+    });
+
+    clearDeckBtn.addEventListener("click", () => {
+      if (matchData && myRole && matchData[myRole.key]?.setupReady) return;
+      Object.keys(customCounts).forEach((k) => { customCounts[k] = 0; });
+      renderSetupPanel();
+    });
+
+    // 確認特性與 60 張自訂牌庫
+    confirmSetupBtn.addEventListener("click", () => {
+      if (!myRole) return;
+      if (getBuilderTotal() !== REQUIRED_DECK_SIZE) return;
+      const myDeck = buildShuffledDeckFromCounts(customCounts);
+      const chosenTrait = selectedTrait;
+
+      runTransaction(matchRef, (data) => {
+        if (!data || !data.p1 || !data.p2) return data;
+        if (data.phase !== "setup") return data;
+        data[myRole.key].trait = chosenTrait;
+        data[myRole.key].deck = myDeck;
+        data[myRole.key].setupReady = true;
+        data.lastAction = `${myRole.name} 已完成特性與 60 張牌庫設定`;
+
+        if (data.p1.setupReady && data.p2.setupReady) {
+          data.phase = "playing";
+          data.round = 1;
+          rollRoundStartTraits(data);
+          data.lastAction = `雙方皆已完成牌庫設定！第 1 回合正式開始`;
+        }
+        return data;
+      });
+    });
 
     document.getElementById("loginBtn").addEventListener("click", async () => {
       errorMsg.textContent = "";
@@ -790,8 +1232,8 @@
 
     document.getElementById("forceResetBtn").addEventListener("click", () => {
       if (!myRole) return;
-      if (confirm("確定要強制重置整局並重新洗牌嗎？")) {
-        set(matchRef, createInitialMatch(`${myRole.name} 強制重置了對局並重新洗牌`));
+      if (confirm("確定要強制重置整局並重新選擇特性與牌庫嗎？")) {
+        set(matchRef, createInitialMatch(`${myRole.name} 強制重置了對局，請重新選擇特性與牌庫`));
       }
     });
 
@@ -815,10 +1257,15 @@
         unsubscribeMatch = onValue(matchRef, (snapshot) => {
           const data = snapshot.val();
           if (!data || !data.p1 || !data.p2) {
-            set(matchRef, createInitialMatch("系統自動建立新對局並洗好雙方 60 張牌庫"));
+            set(matchRef, createInitialMatch("系統自動建立新對局，請雙方選擇特性並組建 60 張牌庫"));
             return;
           }
           matchData = data;
+          if (data.matchId !== lastMatchId) {
+            lastMatchId = data.matchId;
+            selectedTrait = "無";
+            resetLocalBuilderToDefault();
+          }
           const token = `${data.matchId}_${data.round}`;
           if (token !== lastRoundToken) {
             localSlots = [null, null, null, null, null];
@@ -929,6 +1376,7 @@
             data.lastAction = `遊戲結束！${data.endReason}`;
           } else {
             data.round = (data.round || 1) + 1;
+            rollRoundStartTraits(data);
             data.lastAction = `雙方已確認，進入第 ${data.round} 回合`;
           }
         }
@@ -936,7 +1384,7 @@
       });
     });
 
-    // 動作七：遊戲結束後按重來，雙方皆按下則重洗牌庫並重置血量與狀態開始新局
+    // 動作七：遊戲結束後按重來，雙方皆按下則回到開局設定（重新選特性與牌庫）
     restartBtn.addEventListener("click", () => {
       if (!myRole) return;
       runTransaction(matchRef, (data) => {
@@ -945,15 +1393,29 @@
         data.lastAction = `${myRole.name} 已按下重來一局`;
 
         if (data.p1.restartReady && data.p2.restartReady) {
-          return createInitialMatch("雙方皆已按下重來，重置血量與狀態並重新洗牌開始新對局！");
+          return createInitialMatch("雙方皆已按下重來，請重新選擇特性與自訂牌庫！");
         }
         return data;
       });
     });
 
-    function renderBuffTags(container, rawStatus) {
-      const st = normalizeStatus(rawStatus);
+    function renderBuffTags(container, player) {
+      const st = normalizeStatus(player.status);
       const tags = [];
+
+      if (player.trait === "月華一" && st.skyState) {
+        if (st.skyState === "夜幕") {
+          const phaseStr = st.moonPhase ? `．${st.moonPhase}` : "";
+          tags.push(`<span class="tag tag-moon">夜幕${phaseStr}${st.moonEnhanced ? " (已強化)" : ""}</span>`);
+        } else {
+          tags.push(`<span class="tag tag-day">白晝</span>`);
+        }
+        tags.push(`<span class="tag tag-moon">【月】：${st.moonStacks} 層</span>`);
+        if (st.dodgeBonus > 0) {
+          tags.push(`<span class="tag tag-buff">閃避率 +${Math.round(st.dodgeBonus * 100)}%</span>`);
+        }
+      }
+
       tags.push(
         st.enchant
           ? `<span class="tag tag-enchant">附魔：${st.enchant} (+10%)</span>`
@@ -994,7 +1456,8 @@
         atk: "card-atk",
         def: "card-def",
         heal: "card-heal",
-        util: "card-util"
+        util: "card-util",
+        moon: "card-moon"
       };
       const typeClass = typeMap[card.type] || "card-util";
       const valText = card.value !== "" && card.value !== undefined ? ` ${card.value}` : "";
@@ -1014,6 +1477,73 @@
       };
     }
 
+    function renderBuilderGrid(container, templates, locked) {
+      container.innerHTML = "";
+      templates.forEach((tpl) => {
+        const info = createCardContent(tpl, false);
+        const count = customCounts[tpl.name] || 0;
+        const div = document.createElement("div");
+        div.className = `builder-item ${info.typeClass}`;
+        div.innerHTML = `
+          <div>${info.html}</div>
+          <div class="builder-controls">
+            <button type="button" class="mini-btn secondary btn-minus" ${locked || count <= 0 ? "disabled" : ""}>-1</button>
+            <strong>${count} 張</strong>
+            <div style="display:flex; gap:4px;">
+              <button type="button" class="mini-btn btn-plus" ${locked ? "disabled" : ""}>+1</button>
+              <button type="button" class="mini-btn btn-plus5" ${locked ? "disabled" : ""}>+5</button>
+            </div>
+          </div>
+        `;
+        div.querySelector(".btn-minus").addEventListener("click", () => {
+          customCounts[tpl.name] = Math.max(0, (customCounts[tpl.name] || 0) - 1);
+          renderSetupPanel();
+        });
+        div.querySelector(".btn-plus").addEventListener("click", () => {
+          customCounts[tpl.name] = (customCounts[tpl.name] || 0) + 1;
+          renderSetupPanel();
+        });
+        div.querySelector(".btn-plus5").addEventListener("click", () => {
+          customCounts[tpl.name] = (customCounts[tpl.name] || 0) + 5;
+          renderSetupPanel();
+        });
+        container.appendChild(div);
+      });
+    }
+
+    function renderSetupPanel() {
+      const locked = !!(matchData && myRole && matchData[myRole.key]?.setupReady);
+      traitOptNone.classList.toggle("selected", selectedTrait === "無");
+      traitOptMoon.classList.toggle("selected", selectedTrait === "月華一");
+
+      const total = getBuilderTotal();
+      builderTotalCount.textContent = total;
+      if (total === REQUIRED_DECK_SIZE) {
+        builderCountHint.textContent = "已達 60 張，可以確認開戰！";
+        builderCountHint.style.color = "#15803d";
+      } else if (total < REQUIRED_DECK_SIZE) {
+        builderCountHint.textContent = `還差 ${REQUIRED_DECK_SIZE - total} 張`;
+        builderCountHint.style.color = "#b45309";
+      } else {
+        builderCountHint.textContent = `超出 ${total - REQUIRED_DECK_SIZE} 張`;
+        builderCountHint.style.color = "#dc2626";
+      }
+
+      fillDefaultDeckBtn.disabled = locked;
+      clearDeckBtn.disabled = locked;
+      confirmSetupBtn.disabled = locked || total !== REQUIRED_DECK_SIZE;
+      setupWaitMsg.classList.toggle("hidden", !locked);
+
+      renderBuilderGrid(baseCardBuilderGrid, BASE_CARD_TEMPLATES, locked);
+
+      if (selectedTrait === "月華一") {
+        traitCardSection.classList.remove("hidden");
+        renderBuilderGrid(traitCardBuilderGrid, TRAIT_CARDS_BY_TRAIT["月華一"], locked);
+      } else {
+        traitCardSection.classList.add("hidden");
+      }
+    }
+
     function renderGame() {
       if (!matchData || !myRole) return;
       const myState = matchData[myRole.key];
@@ -1029,14 +1559,33 @@
       roundNumEl.textContent = matchData.round || 1;
 
       myHpEl.textContent = myState.hp ?? INITIAL_HP;
+      myMaxHpEl.textContent = myState.maxHp ?? INITIAL_HP;
       oppHpEl.textContent = oppState.hp ?? INITIAL_HP;
+      oppMaxHpEl.textContent = oppState.maxHp ?? INITIAL_HP;
+
+      myTraitNameEl.textContent = matchData.phase === "setup" ? selectedTrait : (myState.trait || "無");
+      oppTraitNameEl.textContent = matchData.phase === "setup" ? (oppState.setupReady ? "已鎖定" : "設定中") : (oppState.trait || "無");
+
       myDeckCountEl.textContent = myDeck.length;
       myDiscardCountEl.textContent = myDiscard.length;
       oppDeckCountEl.textContent = oppDeck.length;
       oppDiscardCountEl.textContent = oppDiscard.length;
 
-      renderBuffTags(myBuffRowEl, myState.status);
-      renderBuffTags(oppBuffRowEl, oppState.status);
+      renderBuffTags(myBuffRowEl, myState);
+      renderBuffTags(oppBuffRowEl, oppState);
+
+      if (matchData.phase === "setup") {
+        oppStatusTextEl.textContent = oppState.setupReady ? "已完成特性與牌庫設定" : "選擇特性與組牌中...";
+        myStatusTextEl.textContent = myState.setupReady ? "已完成設定，等待對手" : "請選擇特性並組滿 60 張牌庫";
+        setupPhasePanel.classList.remove("hidden");
+        playPhasePanel.classList.add("hidden");
+        revealPhasePanel.classList.add("hidden");
+        endPhasePanel.classList.add("hidden");
+        renderSetupPanel();
+        return;
+      }
+
+      setupPhasePanel.classList.add("hidden");
 
       if (matchData.phase === "ended") {
         oppStatusTextEl.textContent = oppState.restartReady ? "已按下重來" : "等待按下重來";
@@ -1127,11 +1676,11 @@
           div.classList.add("filled", info.typeClass);
           div.innerHTML = label + info.html;
 
-          // 若為屬性盾且尚未鎖定，顯示火／水／雷選擇按鈕
+          // 屬性盾選擇：火／水／雷／暗
           if (!locked && card.name === "屬性盾") {
             const picker = document.createElement("div");
             picker.className = "shield-picker";
-            ["火", "水", "雷"].forEach((elem) => {
+            ["火", "水", "雷", "暗"].forEach((elem) => {
               const btn = document.createElement("button");
               btn.type = "button";
               btn.className = "shield-btn" + ((card.shieldElement || "火") === elem ? " selected" : "");
